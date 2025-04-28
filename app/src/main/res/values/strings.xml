@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">PictoVoice</string>
+    <string name="Usuario">Usuario</string>
+    <string name="app_logo">Logo PictoVoice</string>
+    <string name="Password">Contraseña</string>
+    <string name="btn_Login">Iniciar Sesión</string>
+    <string name="btn_register">Registrarse</string>
+    <string name="error_username">Ingrese su nombre de usuario</string>
+    <string name="error_username_length">Min. 4 caracteres</string>
+</resources>

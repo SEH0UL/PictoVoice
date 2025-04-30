@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "544605067297",
+    "project_id": "pictovoice-68f15",
+    "storage_bucket": "pictovoice-68f15.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:544605067297:android:bbc1c2a919d4768cc2ab60",
+        "android_client_info": {
+          "package_name": "com.example.pictovoice"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBScrO4hUyJt7FTcskX2QcTquJ63tid8CY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

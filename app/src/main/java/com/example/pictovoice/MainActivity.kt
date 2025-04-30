@@ -5,53 +5,45 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.pictovoice.databinding.ActivityMainBinding
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private val auth = Firebase.auth // Inicialización de Firebase Auth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Configura el view binding
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Botón de Login
         binding.btnLogin.setOnClickListener {
-            val email = binding.etUsername.text.toString().trim()
+            val username = binding.etUsername.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
 
-            if (validateInputs(email, password)) {
-                // Aquí irá la lógica de Firebase Auth después
-                Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
-
-                // Navegar a la pantalla principal (crearemos esta actividad después)
-                startActivity(Intent(this, HomeActivity::class.java))
-                finish()
+            if (validateInputs(username, password)) {
+                loginUser(username, password)
             }
         }
 
-        // Botón de Registro
         binding.btnRegister.setOnClickListener {
-            // Navegar a la actividad de registro (la crearemos después)
             startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
     private fun validateInputs(username: String, password: String): Boolean {
-        // Validación de username
         if (username.isEmpty()) {
-            binding.tilUsername.error = getString(R.string.error_username)
+            binding.tilUsername.error = "Ingrese su usuario"
             return false
         } else if (username.length < 4) {
-            binding.tilUsername.error = getString(R.string.error_username_length)
+            binding.tilUsername.error = "Mínimo 4 caracteres"
             return false
         } else {
             binding.tilUsername.error = null
         }
 
-        // Validación de password (se mantiene igual)
         if (password.isEmpty()) {
             binding.tilPassword.error = "Ingrese su contraseña"
             return false
@@ -66,7 +58,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loginUser(username: String, password: String) {
-        // Aquí implementarás la lógica con Firebase
-        Toast.makeText(this, "Usuario: $username", Toast.LENGTH_SHORT).show()
+        // Convertimos username a email temporal (Firebase Auth requiere email)
+        val email = "$username@pictovoice.com"
+
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    startActivity(Intent(this, HomeActivity::class.java))
+                    finish()
+                } else {
+                    Toast.makeText(
+                        this,
+                        "Error: ${task.exception?.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
     }
 }

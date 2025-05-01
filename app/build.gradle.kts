@@ -41,18 +41,23 @@ android {
 }
 
 dependencies {
-
+    // Dependencias básicas de Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.firebase.common.ktx)
-    implementation(libs.firebase.firestore.ktx)
-    implementation(libs.firebase.auth.ktx)
+
+    // Firebase BoM (Bill of Materials) - Controla las versiones automáticamente
+    implementation(platform(libs.firebase.bom.v3270)) // Última versión estable
+
+    // Dependencias de Firebase (sin versión explícita, BoM la maneja)
+    implementation (libs.com.google.firebase.firebase.auth.ktx)
+    implementation (libs.google.firebase.firestore.ktx)
+    implementation (libs.google.firebase.common.ktx)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    // Import Firebase BoM
-    implementation(platform(libs.firebase.bom))
 }

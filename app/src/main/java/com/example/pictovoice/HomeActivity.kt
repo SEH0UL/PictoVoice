@@ -17,14 +17,12 @@ class HomeActivity : AppCompatActivity() {
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Verificar si el usuario está logueado
+        // Verificar si el usuario está autenticado
         if (auth.currentUser == null) {
-            startActivity(Intent(this, MainActivity::class.java))
+            // Si no está autenticado, volver a MainActivity
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
             finish()
-            return
         }
-
-        // Aquí cargarías los pictogramas (lo implementaremos después)
-       // binding.welcomeText.text = "Bienvenido, ${auth.currentUser?.email?.replace("@pictovoice.com", "")}"
     }
 }

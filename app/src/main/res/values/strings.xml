@@ -7,4 +7,6 @@
     <string name="btn_register">Registrarse</string>
     <string name="error_username">Ingrese su nombre de usuario</string>
     <string name="error_username_length">Min. 4 caracteres</string>
+    <string name="Name">Nombre</string>
+    <string name="Password2">Confirmar Contraseña</string>
 </resources>

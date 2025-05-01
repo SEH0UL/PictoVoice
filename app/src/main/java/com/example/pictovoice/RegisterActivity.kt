@@ -34,25 +34,31 @@ class RegisterActivity : AppCompatActivity() {
 
     private fun validateInputs(fullName: String, username: String,
                                password: String, confirmPassword: String): Boolean {
-        // Validaciones básicas (puedes personalizar los mensajes)
         if (fullName.isEmpty()) {
-            Toast.makeText(this, "Ingrese nombre completo", Toast.LENGTH_SHORT).show()
+            binding.etFullName.error = "Ingrese nombre completo"
+            return false
+        }
+        if (username.isEmpty()) {
+            binding.etUsername.error = "Ingrese un nombre de usuario"
+            return false
+        }
+        if (password.length < 6) {
+            binding.etPassword.error = "Mínimo 6 caracteres"
             return false
         }
         if (password != confirmPassword) {
-            Toast.makeText(this, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+            binding.etConfirmPassword.error = "Las contraseñas no coinciden"
             return false
         }
         return true
     }
 
     private fun registerUser(fullName: String, username: String, password: String) {
-        val email = "$username@pictovoice.com" // Conversión a email
+        val email = "$username@pictovoice.com"
 
         auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
+            .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    // Guardar datos adicionales en Firestore
                     saveUserToFirestore(fullName, username, auth.currentUser?.uid ?: "")
                 } else {
                     Toast.makeText(
@@ -68,7 +74,7 @@ class RegisterActivity : AppCompatActivity() {
         val user = hashMapOf(
             "fullName" to fullName,
             "username" to username,
-            "role" to "student", // Por defecto
+            "role" to "student",
             "createdAt" to System.currentTimeMillis()
         )
 
@@ -76,8 +82,10 @@ class RegisterActivity : AppCompatActivity() {
             .set(user)
             .addOnSuccessListener {
                 Toast.makeText(this, "¡Registro exitoso!", Toast.LENGTH_SHORT).show()
-                startActivity(Intent(this, MainActivity::class.java))
-                finish()
+                // Navegación a MainActivity después del registro
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
+                finish() // Cierra RegisterActivity
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Error al guardar datos: ${e.message}", Toast.LENGTH_SHORT).show()

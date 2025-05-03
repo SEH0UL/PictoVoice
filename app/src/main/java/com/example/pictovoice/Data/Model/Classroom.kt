@@ -3,7 +3,7 @@ package com.example.pictovoice.Data.Model
 import com.google.firebase.firestore.DocumentSnapshot
 import java.util.Date
 
-data class Class(
+data class Classroom(
     val classId: String = "",
     val className: String = "",
     val teacherId: String = "",
@@ -21,8 +21,8 @@ data class Class(
     }
 
     companion object {
-        fun fromSnapshot(snapshot: DocumentSnapshot): Class? {
-            return snapshot.toObject(Class::class.java)?.copy(classId = snapshot.id)
+        fun fromSnapshot(snapshot: DocumentSnapshot): Classroom? {
+            return snapshot.toObject(Classroom::class.java)?.copy(classId = snapshot.id)
         }
     }
 }

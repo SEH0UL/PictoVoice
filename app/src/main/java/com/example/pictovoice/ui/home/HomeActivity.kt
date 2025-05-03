@@ -1,9 +1,10 @@
-package com.example.pictovoice
+package com.example.pictovoice.ui.home
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.pictovoice.databinding.ActivityHomeBinding
+import com.example.pictovoice.ui.auth.MainActivity
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 

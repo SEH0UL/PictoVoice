@@ -8,7 +8,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import com.example.pictovoice.utils.Result
 
-
 class FirestoreRepository {
     private val db = FirebaseFirestore.getInstance()
 
@@ -20,13 +19,12 @@ class FirestoreRepository {
     // ---------- Operaciones con Usuarios ----------
 
     // Crear o actualizar usuario
-    suspend fun saveUser(user: User): com.example.pictovoice.utils.Result<Unit> = try {
+    suspend fun saveUser(user: User): Result<Unit> = try {
         usersCollection.document(user.userId).set(user.toMap()).await()
-        com.example.pictovoice.utils.Result.Success(Unit)
+        Result.Success(Unit)
     } catch (e: Exception) {
-        com.example.pictovoice.utils.Result.Failure(e)
+        Result.Failure(e)
     }
-
 
     // Obtener usuario por ID
     suspend fun getUser(userId: String): Result<User> = try {
@@ -40,14 +38,12 @@ class FirestoreRepository {
     suspend fun getStudentsByTeacher(teacherId: String): Result<List<User>> = try {
         val querySnapshot = usersCollection
             .whereEqualTo("role", "student")
-            // Aquí deberías implementar la lógica para obtener estudiantes vinculados
-            // a través de las clases
             .get().await()
 
         val students = querySnapshot.documents.mapNotNull { User.fromSnapshot(it) }
-        Result.success(students)
+        Result.Success(students)
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.Failure(e)
     }
 
     // ---------- Operaciones con Pictogramas ----------
@@ -55,16 +51,14 @@ class FirestoreRepository {
     // Crear o actualizar pictograma
     suspend fun savePictogram(pictogram: Pictogram): Result<Unit> = try {
         if (pictogram.pictogramId.isEmpty()) {
-            // Nuevo pictograma
             pictogramsCollection.add(pictogram.toMap()).await()
         } else {
-            // Actualizar existente
             pictogramsCollection.document(pictogram.pictogramId)
                 .set(pictogram.toMap()).await()
         }
-        Result.success(Unit)
+        Result.Success(Unit)
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.Failure(e)
     }
 
     // Obtener pictogramas por categoría y nivel requerido
@@ -78,18 +72,18 @@ class FirestoreRepository {
             .get().await()
 
         val pictograms = querySnapshot.documents.mapNotNull { Pictogram.fromSnapshot(it) }
-        Result.success(pictograms)
+        Result.Success(pictograms)
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.Failure(e)
     }
 
     // Incrementar contador de usos de un pictograma
     suspend fun incrementPictogramUsage(pictogramId: String): Result<Unit> = try {
         pictogramsCollection.document(pictogramId)
             .update("timesUsed", FieldValue.increment(1)).await()
-        Result.success(Unit)
+        Result.Success(Unit)
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.Failure(e)
     }
 
     // ---------- Operaciones con Clases ----------
@@ -102,9 +96,9 @@ class FirestoreRepository {
             classesCollection.document(classData.classId)
                 .set(classData.toMap()).await()
         }
-        Result.success(Unit)
+        Result.Success(Unit)
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.Failure(e)
     }
 
     // Obtener clases de un profesor
@@ -114,18 +108,18 @@ class FirestoreRepository {
             .get().await()
 
         val classes = querySnapshot.documents.mapNotNull { Classroom.fromSnapshot(it) }
-        Result.success(classes)
+        Result.Success(classes)
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.Failure(e)
     }
 
     // Añadir estudiante a una clase
     suspend fun addStudentToClass(classId: String, studentId: String): Result<Unit> = try {
         classesCollection.document(classId)
             .update("studentIds", FieldValue.arrayUnion(studentId)).await()
-        Result.success(Unit)
+        Result.Success(Unit)
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.Failure(e)
     }
 
     // ---------- Sistema de Experiencia ----------
@@ -159,8 +153,8 @@ class FirestoreRepository {
             Pair(newExp, newLevel)
         }.await()
 
-        Result.success(result)
+        Result.Success(result)
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.Failure(e)
     }
 }

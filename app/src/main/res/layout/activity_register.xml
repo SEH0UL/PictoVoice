@@ -163,5 +163,4 @@
         android:text="@string/btn_register"
         android:backgroundTint="@color/color_btn_register"
         android:textColor="@color/white"/>
-
 </LinearLayout>

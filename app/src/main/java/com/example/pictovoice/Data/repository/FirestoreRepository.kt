@@ -1,12 +1,17 @@
-package com.example.pictovoice.Data.repository
+package com.example.pictovoice.Data.repository // Asegúrate que el package es correcto
 
+import android.util.Log
+import com.example.pictovoice.Data.Model.Category // Importa tu modelo Category
 import com.example.pictovoice.Data.Model.Classroom
 import com.example.pictovoice.Data.Model.Pictogram
 import com.example.pictovoice.Data.Model.User
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
-import com.example.pictovoice.utils.Result
+
+// Define un alias para kotlin.Result si quieres evitar colisiones con tu propia clase Result
+// typealias KResult<T> = kotlin.Result<T> // O usa kotlin.Result directamente
 
 class FirestoreRepository {
     private val db = FirebaseFirestore.getInstance()
@@ -15,146 +20,215 @@ class FirestoreRepository {
     private val usersCollection = db.collection("users")
     private val pictogramsCollection = db.collection("pictograms")
     private val classesCollection = db.collection("classes")
+    private val categoriesCollection = db.collection("categories") // Nueva colección para las carpetas/categorías
 
     // ---------- Operaciones con Usuarios ----------
 
-    // Crear o actualizar usuario
-    suspend fun saveUser(user: User): Result<Unit> = try {
+    // Crear o actualizar usuario (ya lo tenías, asegúrate que el modelo User es el actual)
+    suspend fun saveUser(user: User): kotlin.Result<Unit> = try {
         usersCollection.document(user.userId).set(user.toMap()).await()
-        Result.Success(Unit)
+        kotlin.Result.success(Unit)
     } catch (e: Exception) {
-        Result.Failure(e)
+        Log.e("FirestoreRepo", "Error saving user ${user.userId}", e)
+        kotlin.Result.failure(e)
     }
 
-    // Obtener usuario por ID
-    suspend fun getUser(userId: String): Result<User> = try {
+    // Obtener usuario por ID (ya lo tenías)
+    suspend fun getUser(userId: String): kotlin.Result<User?> = try {
         val snapshot = usersCollection.document(userId).get().await()
-        User.fromSnapshot(snapshot)?.let { Result.Success(it) } ?: Result.Failure(Exception("User not found"))
+        if (snapshot.exists()) {
+            kotlin.Result.success(User.fromSnapshot(snapshot))
+        } else {
+            kotlin.Result.success(null) // Usuario no encontrado
+        }
     } catch (e: Exception) {
-        Result.Failure(e)
+        Log.e("FirestoreRepo", "Error getting user $userId", e)
+        kotlin.Result.failure(e)
     }
 
-    // Obtener todos los estudiantes de un profesor
-    suspend fun getStudentsByTeacher(teacherId: String): Result<List<User>> = try {
-        val querySnapshot = usersCollection
-            .whereEqualTo("role", "student")
-            .get().await()
+    // Obtener todos los estudiantes de un profesor (ya lo tenías, revisa la lógica si es compleja)
+    // Esta implementación es un placeholder, necesitarías una lógica más robusta
+    // para vincular profesores y alumnos (probablemente a través de la colección 'classes')
+    suspend fun getStudentsByTeacher(teacherId: String): kotlin.Result<List<User>> = try {
+        // Ejemplo: si las clases guardan studentIds y queremos obtener esos User objects
+        val teacherClassesResult = getClassesByTeacher(teacherId)
+        if (teacherClassesResult.isFailure) {
+            return kotlin.Result.failure(teacherClassesResult.exceptionOrNull() ?: Exception("Failed to get teacher classes"))
+        }
 
-        val students = querySnapshot.documents.mapNotNull { User.fromSnapshot(it) }
-        Result.Success(students)
+        val studentIds = teacherClassesResult.getOrNull()?.flatMap { it.studentIds }?.distinct() ?: emptyList()
+
+        if (studentIds.isEmpty()) {
+            kotlin.Result.success(emptyList())
+        } else {
+            // Firestore 'in' query tiene un límite de 10 (o 30 para algunas APIs más nuevas) elementos.
+            // Si tienes más, necesitas hacer múltiples queries.
+            // Aquí simplificamos asumiendo pocos estudiantes o que manejas la paginación/batching.
+            val querySnapshot = usersCollection
+                .whereIn("userId", studentIds) // Busca usuarios cuyos IDs estén en la lista
+                .get().await()
+            val students = querySnapshot.documents.mapNotNull { User.fromSnapshot(it) }
+            kotlin.Result.success(students)
+        }
     } catch (e: Exception) {
-        Result.Failure(e)
+        Log.e("FirestoreRepo", "Error getting students for teacher $teacherId", e)
+        kotlin.Result.failure(e)
     }
 
     // ---------- Operaciones con Pictogramas ----------
 
-    // Crear o actualizar pictograma
-    suspend fun savePictogram(pictogram: Pictogram): Result<Unit> = try {
-        if (pictogram.pictogramId.isEmpty()) {
-            pictogramsCollection.add(pictogram.toMap()).await()
+    // Crear o actualizar pictograma (ya lo tenías)
+    suspend fun savePictogram(pictogram: Pictogram): kotlin.Result<Unit> = try {
+        val docRef = if (pictogram.pictogramId.isBlank()) {
+            // Nuevo pictograma, Firestore generará el ID
+            pictogramsCollection.document()
         } else {
+            // Actualizar existente
             pictogramsCollection.document(pictogram.pictogramId)
-                .set(pictogram.toMap()).await()
         }
-        Result.Success(Unit)
+        // Si es nuevo, actualiza el modelo con el ID generado antes de guardar
+        val pictogramToSave = if (pictogram.pictogramId.isBlank()) pictogram.copy(pictogramId = docRef.id) else pictogram
+        docRef.set(pictogramToSave.toMap()).await()
+        kotlin.Result.success(Unit)
     } catch (e: Exception) {
-        Result.Failure(e)
+        Log.e("FirestoreRepo", "Error saving pictogram ${pictogram.name}", e)
+        kotlin.Result.failure(e)
     }
 
-    // Obtener pictogramas por categoría y nivel requerido
-    suspend fun getPictogramsByCategoryAndLevel(
-        category: String,
-        maxLevel: Int
-    ): Result<List<Pictogram>> = try {
-        val querySnapshot = pictogramsCollection
-            .whereEqualTo("category", category)
-            .whereLessThanOrEqualTo("levelRequired", maxLevel)
-            .get().await()
+    /**
+     * Obtiene pictogramas por nombre de categoría y nivel máximo requerido por el usuario.
+     * Ordena por nombre por defecto.
+     */
+    suspend fun getPictogramsByCategoryAndLevel(categoryName: String, maxLevel: Int): kotlin.Result<List<Pictogram>> {
+        return try {
+            Log.d("FirestoreRepo", "Fetching pictos for category: $categoryName, maxLevel: $maxLevel")
+            val querySnapshot = pictogramsCollection
+                .whereEqualTo("category", categoryName)
+                .whereLessThanOrEqualTo("levelRequired", maxLevel)
+                .orderBy("name", Query.Direction.ASCENDING) // Opcional: ordenar por nombre o algún otro campo
+                .get()
+                .await()
 
-        val pictograms = querySnapshot.documents.mapNotNull { Pictogram.fromSnapshot(it) }
-        Result.Success(pictograms)
-    } catch (e: Exception) {
-        Result.Failure(e)
+            val pictograms = querySnapshot.documents.mapNotNull { Pictogram.fromSnapshot(it) }
+            Log.d("FirestoreRepo", "Found ${pictograms.size} pictos for $categoryName")
+            kotlin.Result.success(pictograms)
+        } catch (e: Exception) {
+            Log.e("FirestoreRepo", "Error fetching pictograms for category $categoryName and level $maxLevel", e)
+            kotlin.Result.failure(e)
+        }
     }
 
-    // Incrementar contador de usos de un pictograma
-    suspend fun incrementPictogramUsage(pictogramId: String): Result<Unit> = try {
+    // Incrementar contador de usos de un pictograma (ya lo tenías)
+    suspend fun incrementPictogramUsage(pictogramId: String): kotlin.Result<Unit> = try {
         pictogramsCollection.document(pictogramId)
             .update("timesUsed", FieldValue.increment(1)).await()
-        Result.Success(Unit)
+        kotlin.Result.success(Unit)
     } catch (e: Exception) {
-        Result.Failure(e)
+        Log.e("FirestoreRepo", "Error incrementing usage for pictogram $pictogramId", e)
+        kotlin.Result.failure(e)
     }
+
+    // ---------- Operaciones con Categorías (para las carpetas) ----------
+
+    /**
+     * Obtiene la lista de categorías/carpetas que el alumno puede ver.
+     * Asume una colección "categories" y un campo "displayOrder" para ordenar.
+     */
+    suspend fun getStudentCategories(): kotlin.Result<List<Category>> {
+        return try {
+            val querySnapshot = categoriesCollection
+                .orderBy("displayOrder", Query.Direction.ASCENDING) // Asegúrate de tener este campo y un índice
+                .get().await()
+            val categories = querySnapshot.documents.mapNotNull { Category.fromSnapshot(it) }
+            kotlin.Result.success(categories)
+        } catch (e: Exception) {
+            Log.e("FirestoreRepo", "Error fetching student categories", e)
+            kotlin.Result.failure(e)
+        }
+    }
+
 
     // ---------- Operaciones con Clases ----------
 
-    // Crear o actualizar clase
-    suspend fun saveClass(classData: Classroom): Result<Unit> = try {
-        if (classData.classId.isEmpty()) {
-            classesCollection.add(classData.toMap()).await()
+    // Crear o actualizar clase (ya lo tenías)
+    suspend fun saveClass(classData: Classroom): kotlin.Result<Unit> = try {
+        val docRef = if (classData.classId.isBlank()) {
+            classesCollection.document()
         } else {
             classesCollection.document(classData.classId)
-                .set(classData.toMap()).await()
         }
-        Result.Success(Unit)
+        val classToSave = if (classData.classId.isBlank()) classData.copy(classId = docRef.id) else classData
+        docRef.set(classToSave.toMap()).await()
+        kotlin.Result.success(Unit)
     } catch (e: Exception) {
-        Result.Failure(e)
+        Log.e("FirestoreRepo", "Error saving class ${classData.className}", e)
+        kotlin.Result.failure(e)
     }
 
-    // Obtener clases de un profesor
-    suspend fun getClassesByTeacher(teacherId: String): Result<List<Classroom>> = try {
+    // Obtener clases de un profesor (ya lo tenías)
+    suspend fun getClassesByTeacher(teacherId: String): kotlin.Result<List<Classroom>> = try {
         val querySnapshot = classesCollection
             .whereEqualTo("teacherId", teacherId)
             .get().await()
 
         val classes = querySnapshot.documents.mapNotNull { Classroom.fromSnapshot(it) }
-        Result.Success(classes)
+        kotlin.Result.success(classes)
     } catch (e: Exception) {
-        Result.Failure(e)
+        Log.e("FirestoreRepo", "Error getting classes for teacher $teacherId", e)
+        kotlin.Result.failure(e)
     }
 
-    // Añadir estudiante a una clase
-    suspend fun addStudentToClass(classId: String, studentId: String): Result<Unit> = try {
+    // Añadir estudiante a una clase (ya lo tenías)
+    suspend fun addStudentToClass(classId: String, studentId: String): kotlin.Result<Unit> = try {
         classesCollection.document(classId)
             .update("studentIds", FieldValue.arrayUnion(studentId)).await()
-        Result.Success(Unit)
+        kotlin.Result.success(Unit)
     } catch (e: Exception) {
-        Result.Failure(e)
+        Log.e("FirestoreRepo", "Error adding student $studentId to class $classId", e)
+        kotlin.Result.failure(e)
     }
 
-    // ---------- Sistema de Experiencia ----------
+    // ---------- Sistema de Experiencia (ya lo tenías) ----------
 
     // Añadir experiencia a un estudiante
     suspend fun addExperienceToStudent(
         studentId: String,
         expToAdd: Int
-    ): Result<Pair<Int, Int>> = try {
-        val userDoc = usersCollection.document(studentId)
+    ): kotlin.Result<Pair<Int, Int>> = try { // Devuelve (newExp, newLevel)
+        val userDocRef = usersCollection.document(studentId)
 
-        val result = db.runTransaction { transaction ->
-            val snapshot = transaction.get(userDoc)
+        val resultPair: Pair<Int, Int> = db.runTransaction { transaction ->
+            val snapshot = transaction.get(userDocRef)
             val currentExp = snapshot.getLong("currentExp")?.toInt() ?: 0
-            val totalExp = snapshot.getLong("totalExp")?.toInt() ?: 0
+            val totalExp = snapshot.getLong("totalExp")?.toInt() ?: 0 // Necesario para actualizar el totalExp
             val currentLevel = snapshot.getLong("currentLevel")?.toInt() ?: 1
 
-            var newExp = currentExp + expToAdd
+            val newTotalExp = totalExp + expToAdd
+            var newCurrentExp = currentExp + expToAdd
             var newLevel = currentLevel
-            val expNeededForNextLevel = newLevel * 1000
 
-            if (newExp >= expNeededForNextLevel) {
-                newExp -= expNeededForNextLevel
+            // Lógica de subida de nivel (ajusta 1000 si es diferente)
+            // Ejemplo: Nivel 1 necesita 1000 EXP para Nivel 2.
+            // Nivel 2 necesita 2000 EXP para Nivel 3 (desde 0 EXP de ese nivel).
+            var expNeededForNextLevel = newLevel * 1000 // O la fórmula que estés usando
+
+            while (newCurrentExp >= expNeededForNextLevel && newLevel < 100) { // Limite de nivel 100 por ejemplo
+                newCurrentExp -= expNeededForNextLevel
                 newLevel++
+                // Actualizar la EXP necesaria para el siguiente nivel (si la fórmula cambia con el nivel)
+                expNeededForNextLevel = newLevel * 1000 // Actualiza si es dinámico
             }
 
-            transaction.update(userDoc, "currentExp", newExp)
-            transaction.update(userDoc, "totalExp", totalExp + expToAdd)
-            transaction.update(userDoc, "currentLevel", newLevel)
+            transaction.update(userDocRef, "currentExp", newCurrentExp)
+            transaction.update(userDocRef, "totalExp", newTotalExp)
+            transaction.update(userDocRef, "currentLevel", newLevel)
 
-            Pair(newExp, newLevel)
+            Pair(newCurrentExp, newLevel) // Devuelve la nueva exp actual y el nuevo nivel
         }.await()
 
-        Result.Success(result)
+        kotlin.Result.success(resultPair)
     } catch (e: Exception) {
-        Result.Failure(e)
+        Log.e("FirestoreRepo", "Error adding experience to student $studentId", e)
+        kotlin.Result.failure(e)
     }
 }

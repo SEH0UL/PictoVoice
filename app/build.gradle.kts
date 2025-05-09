@@ -69,4 +69,8 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    // Glide para carga de imágenes
+    implementation(libs.glide) // Verifica siempre la última versión estable de Glide
+    annotationProcessor(libs.compiler) // La versión debe coincidir
+
 }

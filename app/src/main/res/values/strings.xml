@@ -10,4 +10,8 @@
     <string name="Name">Nombre</string>
     <string name="Password2">Confirmar Contraseña</string>
     <string name="user_email">Usuario o Correo Electrónico</string>
+    <string name="Cod_Teacher_Register">Código de profesor</string>
+    <string name="Rol_Teacher">Soy profesor</string>
+    <string name="Rol_Alumno">Soy alumno</string>
+    <string name="Email_Register">Correo Electrónico</string>
 </resources>

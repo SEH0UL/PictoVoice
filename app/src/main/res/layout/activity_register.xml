@@ -83,7 +83,7 @@
                     android:id="@+id/etEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Correo Electrónico"
+                    android:hint="@string/Email_Register"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"/>
             </com.google.android.material.textfield.TextInputLayout>
@@ -134,7 +134,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Soy alumno"
+                    android:text="@string/Rol_Alumno"
                     android:checked="true"/>
 
                 <RadioButton
@@ -142,7 +142,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Soy profesor"/>
+                    android:text="@string/Rol_Teacher"/>
             </RadioGroup>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -157,7 +157,7 @@
                     android:id="@+id/etTeacherCode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Código de profesor"
+                    android:hint="@string/Cod_Teacher_Register"
                     android:inputType="textPassword" />
             </com.google.android.material.textfield.TextInputLayout>
 

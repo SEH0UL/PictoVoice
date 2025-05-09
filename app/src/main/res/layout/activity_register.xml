@@ -1,166 +1,176 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center"
-    android:background="@color/white">
+    android:background="@color/white"
+    android:padding="16dp">
 
-    <!-- Logo de la app (centrado) -->
-    <ImageView
-        android:id="@+id/ivLogo"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_marginBottom="12dp"
-        android:src="@drawable/logo_pictovoice"
-        android:contentDescription="@string/app_logo"
-        android:scaleType="fitCenter"/>
-
-    <!-- Campo de Nombre-->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilFullName"
+    <LinearLayout
+        android:id="@+id/llButtonsContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentBottom="true">
 
-        app:hintEnabled="true"
-        app:hintAnimationEnabled="true"
-        app:errorEnabled="true"
-        app:startIconDrawable="@drawable/ic_person"
-        app:startIconTint="@color/primary_color">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etFullName"
+        <Button
+            android:id="@+id/btnRegister"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/Name"
-            android:inputType="text"
-            android:maxLines="1"/>
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/color_btn_register"
+            android:text="@string/btn_register" />
 
-    <!-- Campo de Usuario-->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilUsuario"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-
-        app:hintEnabled="true"
-        app:hintAnimationEnabled="true"
-        app:errorEnabled="true"
-        app:startIconDrawable="@drawable/ic_person"
-        app:startIconTint="@color/primary_color">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etUsername"
+        <Button
+            android:id="@+id/btnLoginRedirect"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/Usuario"
-            android:inputType="text"
-            android:maxLines="1"/>
-    </com.google.android.material.textfield.TextInputLayout>
+            android:backgroundTint="@color/color_btn_login"
+            android:text="@string/btn_Login" />
+    </LinearLayout>
 
-
-    <!-- Campo de Contraseña -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilPassword"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:hintEnabled="true"
-        app:hintAnimationEnabled="true"
-        app:errorEnabled="true"
-        app:passwordToggleEnabled="true"
-        app:passwordToggleDrawable="@drawable/custom_password_toggle">
+        android:layout_height="match_parent"
+        android:layout_above="@id/llButtonsContainer"
+        android:fillViewport="true">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPassword"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/Password"
-            android:inputType="textPassword"/>
-    </com.google.android.material.textfield.TextInputLayout>
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
 
-    <!-- Campo de Confirmar Contraseña -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilConfirmPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        app:hintEnabled="true"
-        app:hintAnimationEnabled="true"
-        app:errorEnabled="true"
-        app:passwordToggleEnabled="true"
-        app:passwordToggleDrawable="@drawable/custom_password_toggle">
+            <!-- Logo de la app (centrado) -->
+            <ImageView
+                android:id="@+id/ivLogo"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_marginTop="36dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/logo_pictovoice"
+                android:contentDescription="@string/app_logo"
+                android:scaleType="fitCenter"/>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etConfirmPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/Password2"
-            android:inputType="textPassword"/>
-    </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilFullName"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:errorEnabled="true"
+                app:startIconDrawable="@drawable/ic_person">
 
-    <RadioGroup
-        android:id="@+id/rgRole"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etFullName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/Name"
+                    android:inputType="textPersonName|textCapWords"
+                    android:maxLines="1"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <RadioButton
-            android:id="@+id/rbStudent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Soy alumno"
-            android:checked="true"/>
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilEmail"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:errorEnabled="true"
+                app:startIconDrawable="@android:drawable/ic_dialog_email">
 
-        <RadioButton
-            android:id="@+id/rbTeacher"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Soy profesor"/>
-    </RadioGroup>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Correo Electrónico"
+                    android:inputType="textEmailAddress"
+                    android:maxLines="1"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Campo para código de profesor (inicialmente oculto) -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilTeacherCode"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:visibility="gone">
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPassword"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:errorEnabled="true"
+                app:passwordToggleEnabled="true">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etTeacherCode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Código de profesor"
-            android:inputType="textPassword"/>
-    </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/Password"
+                    android:inputType="textPassword"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginBottom="16dp"
-        android:visibility="gone"
-        style="?android:attr/progressBarStyleLarge"/>
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilConfirmPassword"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:errorEnabled="true"
+                app:passwordToggleEnabled="true">
 
-    <!-- Botón de Iniciar Sesión -->
-    <Button
-        android:id="@+id/btnLogin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="@string/btn_Login"
-        android:backgroundTint="@color/color_btn_login"
-        android:textColor="@color/white"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etConfirmPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/Password2"
+                    android:inputType="textPassword"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Botón de Registrarse -->
-    <Button
-        android:id="@+id/btnRegister"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/btn_register"
-        android:backgroundTint="@color/color_btn_register"
-        android:textColor="@color/white"/>
-</LinearLayout>
+            <RadioGroup
+                android:id="@+id/rgRole"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rbStudent"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Soy alumno"
+                    android:checked="true"/>
+
+                <RadioButton
+                    android:id="@+id/rbTeacher"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Soy profesor"/>
+            </RadioGroup>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTeacherCode"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTeacherCode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Código de profesor"
+                    android:inputType="textPassword" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                style="?android:attr/progressBarStyleLarge"/>
+
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

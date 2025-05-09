@@ -2,17 +2,18 @@ package com.example.pictovoice.Data.Model
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
-import java.util.Date
+import android.util.Log // Para logging en fromSnapshot
 
 data class User(
     val userId: String = "",
-    val username: String = "",
+    val username: String = "",      // Generado y único, en mayúsculas
     val fullName: String = "",
-    val email: String = "",
+    val email: String = "",         // Usado para Firebase Auth y almacenado en Firestore
     val role: String = "student",
     val createdAt: Timestamp = Timestamp.now(),
     val lastLogin: Timestamp = Timestamp.now(),
     val profileImageUrl: String = "",
+    // ... otros campos específicos del estudiante/profesor
     val currentLevel: Int = 1,
     val currentExp: Int = 0,
     val totalExp: Int = 0,
@@ -52,6 +53,7 @@ data class User(
                     unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf("basico")
                 )
             } catch (e: Exception) {
+                Log.e("User", "Error al convertir snapshot a User: ${e.message}", e)
                 null
             }
         }

@@ -5,9 +5,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+// import com.bumptech.glide.Glide // No necesitamos Glide si son recursos locales
 import com.example.pictovoice.Data.Model.Pictogram
-import com.example.pictovoice.R // Para el placeholder si lo tienes
+import com.example.pictovoice.R // Para el placeholder
 import com.example.pictovoice.databinding.ItemPictogramPhraseBinding
 
 class PhrasePictogramAdapter :
@@ -31,27 +31,34 @@ class PhrasePictogramAdapter :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(pictogram: Pictogram) {
-            if (pictogram.imageUrl.isNotBlank()) {
-                Glide.with(binding.ivPhrasePictogramImage.context)
-                    .load(pictogram.imageUrl)
-                    .placeholder(R.drawable.ic_placeholder_image) // Crea un drawable placeholder
-                    .error(R.drawable.ic_error_image) // Crea un drawable para errores
-                    .into(binding.ivPhrasePictogramImage)
-            } else {
-                // Opcional: poner una imagen por defecto si no hay URL
-                binding.ivPhrasePictogramImage.setImageResource(R.drawable.ic_placeholder_image)
+            if (pictogram.imageResourceId != 0) { // 0 se considera un ID de recurso inválido
+                binding.ivPhrasePictogramImage.setImageResource(pictogram.imageResourceId)
+            } else if (pictogram.imageUrl != null && pictogram.imageUrl.isNotBlank()) {
+                // Fallback a Glide si imageUrl existe y imageResourceId no (para un modelo híbrido)
+                // Si ya no usas Glide en absoluto, puedes quitar esta parte.
+                // Glide.with(binding.ivPhrasePictogramImage.context)
+                //     .load(pictogram.imageUrl)
+                //     .placeholder(R.drawable.ic_placeholder_image)
+                //     .error(R.drawable.ic_error_image)
+                //     .into(binding.ivPhrasePictogramImage)
+                binding.ivPhrasePictogramImage.setImageResource(R.drawable.ic_placeholder_image) // O un placeholder si Glide no se usa
             }
-            // No se necesita texto ya que la imagen lo incluye
+            else {
+                // Imagen por defecto si no hay imageResourceId ni imageUrl
+                binding.ivPhrasePictogramImage.setImageResource(R.drawable.ic_placeholder_image) // Asegúrate de tener este drawable
+            }
+            // El nombre del pictograma no se muestra usualmente en la barra de frase, solo la imagen.
         }
     }
 
     class PhraseDiffCallback : DiffUtil.ItemCallback<Pictogram>() {
         override fun areItemsTheSame(oldItem: Pictogram, newItem: Pictogram): Boolean {
+            // Usa un ID único. Si pictogramId es local y único, está bien.
             return oldItem.pictogramId == newItem.pictogramId
         }
 
         override fun areContentsTheSame(oldItem: Pictogram, newItem: Pictogram): Boolean {
-            return oldItem == newItem // O compara campos específicos si es necesario
+            return oldItem == newItem // El data class compara todos los campos
         }
     }
 }

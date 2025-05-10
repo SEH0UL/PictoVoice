@@ -1,26 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:background="#F0F0F0"
+    tools:context=".ui.home.HomeActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clPhraseBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:padding="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPhrasePictograms"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:orientation="horizontal"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnDeletePictogram"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:listitem="@layout/item_pictogram_phrase"
+            tools:itemCount="3"/>
+
+        <ImageButton
+            android:id="@+id/btnDeletePictogram"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/ic_backspace_outline"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Borrar último pictograma"
+            app:tint="@color/primary_dark_color"
+            app:layout_constraintEnd_toStartOf="@+id/btnPlayPhrase"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginEnd="8dp"/>
+
+        <ImageButton
+            android:id="@+id/btnPlayPhrase"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_play_circle_outline"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Reproducir frase"
+            android:visibility="gone"
+            app:tint="@color/primary_color"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/tvLabelCategories"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Carpetas"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/clPhraseBar"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/categoryNavigationContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingVertical="8dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintTop_toBottomOf="@id/tvLabelCategories"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_category_folder"
+        tools:itemCount="5"/>
+
+    <TextView
+        android:id="@+id/tvCurrentCategoryName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="8dp"
+        android:background="@color/teal_200"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/categoryNavigationContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="Comida"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDynamicPictograms"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="8dp"
+        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        app:spanCount="6"
+        app:layout_constraintTop_toBottomOf="@id/tvCurrentCategoryName"
+        app:layout_constraintBottom_toTopOf="@+id/tvLabelFixed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_pictogram_selection"
+        tools:itemCount="12"/>
 
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/tvLabelFixed"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Pictogramas"
-        android:textSize="24sp"
+        android:text="Fijos"
+        android:textSize="16sp"
         android:textStyle="bold"
-        android:gravity="center"/>
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintBottom_toTopOf="@+id/llFixedElements"
+        app:layout_constraintStart_toStartOf="parent"/>
 
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvPictograms"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        app:spanCount="2"/>
+    <LinearLayout
+        android:id="@+id/llFixedElements"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/white"
+        android:paddingVertical="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/tvLabelPronouns"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pronombres:"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="4dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPronouns"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_pictogram_selection"
+            tools:itemCount="4"/>
+
+        <TextView
+            android:id="@+id/tvLabelFixedVerbs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Verbos:"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="4dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvFixedVerbs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_pictogram_selection"
+            tools:itemCount="6"/>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

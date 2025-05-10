@@ -1,7 +1,7 @@
 package com.example.pictovoice.viewmodels // Asegúrate que el package es correcto
 
 import android.app.Application
-import android.speech.tts.TextToSpeech // Para la funcionalidad de TTS más adelante
+import android.media.MediaPlayer // Para reproducir audios locales
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -10,23 +10,20 @@ import androidx.lifecycle.viewModelScope
 import com.example.pictovoice.Data.Model.Category
 import com.example.pictovoice.Data.Model.Pictogram
 import com.example.pictovoice.Data.Model.User
-import com.example.pictovoice.Data.repository.FirestoreRepository
-// Importa tu clase Result si la tienes definida globalmente
-// import com.example.pictovoice.utils.Result
+import com.example.pictovoice.Data.repository.FirestoreRepository // Aún lo necesitamos para el usuario
+import com.example.pictovoice.R // Importante para acceder a los recursos locales
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-// Define constantes para las categorías fijas y la inicial
-private const val PRONOUNS_CATEGORY_ID = "pronombres_fijos" // Debe coincidir con tu ID en Firestore
-private const val FIXED_VERBS_CATEGORY_ID = "verbos_fijos"   // Debe coincidir con tu ID en Firestore
-private const val INITIAL_DYNAMIC_CATEGORY_ID = "general"    // O la categoría por defecto que quieras
+// Constantes para IDs de categorías locales (debes tener pictogramas con estos categoryId)
+private const val PRONOUNS_CATEGORY_ID = "local_pronombres"
+private const val FIXED_VERBS_CATEGORY_ID = "local_verbos"
+private const val INITIAL_DYNAMIC_CATEGORY_ID = "local_comida" // Ejemplo, asegúrate de tener esta categoría y pictos
 
 private const val MAX_PHRASE_PICTOGRAMS = 25
 
 class StudentHomeViewModel(application: Application) : AndroidViewModel(application) {
     private val firestoreRepository = FirestoreRepository()
-    // TextToSpeech engine - inicializar más tarde
-    // private lateinit var tts: TextToSpeech
 
     // --- LiveData para la UI ---
     private val _currentUser = MutableLiveData<User?>()
@@ -59,108 +56,156 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
     private val _playButtonVisibility = MutableLiveData<Boolean>(false)
     val playButtonVisibility: LiveData<Boolean> = _playButtonVisibility
 
+    // --- Listas locales de datos ---
+    private var allLocalPictograms: List<Pictogram> = emptyList()
+    private var allLocalCategories: List<Category> = emptyList()
+
+    // MediaPlayer para audios locales
+    private var mediaPlayer: MediaPlayer? = null
+    private var audioQueue: MutableList<Int> = mutableListOf()
+
 
     init {
-        // Inicializar TTS
-        // tts = TextToSpeech(application) { status ->
-        //    if (status == TextToSpeech.SUCCESS) {
-        //        val result = tts.setLanguage(Locale("es", "ES")) // Español de España
-        //        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-        //            Log.e("TTS", "Language not supported")
-        //            _errorMessage.value = "El motor de Voz para Español no está disponible."
-        //        } else {
-        //            Log.i("TTS", "TTS Engine Initialized (Spanish)")
-        //        }
-        //    } else {
-        //        Log.e("TTS", "Initialization failed")
-        //        _errorMessage.value = "No se pudo inicializar el motor de Voz."
-        //    }
-        // }
+        Log.d("StudentHomeVM", "ViewModel created. Initializing local data.")
+        initializeLocalData()
     }
 
-    fun loadInitialData(userId: String) {
+    private fun initializeLocalData() {
+        _isLoading.value = true
+        allLocalCategories = createLocalCategories()
+        _availableCategories.value = allLocalCategories
+
+        allLocalPictograms = createLocalPictograms()
+
+        val userLevelForLocal = _currentUser.value?.currentLevel ?: 1
+
+        _pronounPictograms.value = allLocalPictograms.filter {
+            it.category == PRONOUNS_CATEGORY_ID && it.levelRequired <= userLevelForLocal
+        }
+        _fixedVerbPictograms.value = allLocalPictograms.filter {
+            it.category == FIXED_VERBS_CATEGORY_ID && it.levelRequired <= userLevelForLocal
+        }
+
+        val initialCategory = allLocalCategories.find { it.categoryId == INITIAL_DYNAMIC_CATEGORY_ID }
+        if (initialCategory != null) {
+            loadDynamicPictogramsByLocalCategory(initialCategory, userLevelForLocal)
+        } else if (allLocalCategories.isNotEmpty()) {
+            // Fallback a la primera categoría si la inicial no se encuentra
+            loadDynamicPictogramsByLocalCategory(allLocalCategories.first(), userLevelForLocal)
+        } else {
+            _dynamicPictograms.value = emptyList()
+            _currentDynamicCategoryName.value = "Categorías no disponibles"
+            Log.w("StudentHomeVM", "No categories available, including initial dynamic category.")
+        }
+        _isLoading.value = false
+    }
+
+    fun loadCurrentUserData(userId: String) {
         _isLoading.value = true
         viewModelScope.launch {
             try {
-                // Cargar datos del usuario
                 val userResult = firestoreRepository.getUser(userId)
                 if (userResult.isSuccess) {
                     _currentUser.value = userResult.getOrNull()
-                    val user = userResult.getOrNull()
+                    // Recargar pictogramas locales con el nivel de usuario correcto
+                    // Esto es importante si el nivel del usuario afecta la visibilidad
+                    val userLevel = _currentUser.value?.currentLevel ?: 1
+                    _pronounPictograms.value = allLocalPictograms.filter { it.category == PRONOUNS_CATEGORY_ID && it.levelRequired <= userLevel }
+                    _fixedVerbPictograms.value = allLocalPictograms.filter { it.category == FIXED_VERBS_CATEGORY_ID && it.levelRequired <= userLevel }
 
-                    user?.let {
-                        // Cargar pronombres
-                        loadFixedCategory(PRONOUNS_CATEGORY_ID, _pronounPictograms, it.currentLevel)
-                        // Cargar verbos fijos
-                        loadFixedCategory(FIXED_VERBS_CATEGORY_ID, _fixedVerbPictograms, it.currentLevel)
-                        // Cargar la categoría dinámica inicial
-                        loadDynamicPictogramsByCategory(getCategoryByName(INITIAL_DYNAMIC_CATEGORY_ID) ?: Category(INITIAL_DYNAMIC_CATEGORY_ID, INITIAL_DYNAMIC_CATEGORY_ID.capitalize(Locale.ROOT)) , it.currentLevel)
+                    val currentCategory = _availableCategories.value?.find { it.name == _currentDynamicCategoryName.value }
+                        ?: allLocalCategories.find { it.categoryId == INITIAL_DYNAMIC_CATEGORY_ID }
+                        ?: allLocalCategories.firstOrNull()
+
+                    currentCategory?.let {
+                        loadDynamicPictogramsByLocalCategory(it, userLevel)
                     }
+
                 } else {
                     _errorMessage.value = "Error al cargar datos del usuario: ${userResult.exceptionOrNull()?.message}"
                 }
-
-                // Cargar lista de categorías disponibles (carpetas)
-                // Esto es un placeholder, necesitas implementar la carga real de categorías.
-                // Podrías tener una colección "categories" en Firestore.
-                val categoriesResult = firestoreRepository.getStudentCategories() // Necesitarás este método
-                if (categoriesResult.isSuccess) {
-                    _availableCategories.value = categoriesResult.getOrNull()
-                } else {
-                    _availableCategories.value = listOf( // Fallback
-                        Category("cat1", "Comida", 1),
-                        Category("cat2", "Animales", 2),
-                        Category("cat3", "Acciones", 3),
-                        Category("cat4", "Lugares", 4),
-                        Category(INITIAL_DYNAMIC_CATEGORY_ID, INITIAL_DYNAMIC_CATEGORY_ID.capitalize(Locale.ROOT), 0)
-                    )
-                    _errorMessage.value = "Error al cargar categorías: ${categoriesResult.exceptionOrNull()?.message}"
-                }
-
-
             } catch (e: Exception) {
-                _errorMessage.value = "Error inesperado: ${e.message}"
-                Log.e("StudentHomeVM", "loadInitialData Error", e)
+                _errorMessage.value = "Excepción al cargar datos del usuario: ${e.message}"
+                Log.e("StudentHomeVM", "loadCurrentUserData Exception", e)
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    private suspend fun loadFixedCategory(categoryId: String, liveData: MutableLiveData<List<Pictogram>>, userLevel: Int) {
-        val result = firestoreRepository.getPictogramsByCategoryAndLevel(categoryId, userLevel)
-        if (result.isSuccess) {
-            liveData.postValue(result.getOrNull() ?: emptyList())
-        } else {
-            Log.e("StudentHomeVM", "Error loading fixed category $categoryId: ${result.exceptionOrNull()?.message}")
-            liveData.postValue(emptyList()) // Para evitar que quede null
-            // _errorMessage.postValue("Error cargando pictogramas para $categoryId") // Evita spam de errores
-        }
+    private fun createLocalCategories(): List<Category> {
+        Log.d("StudentHomeVM", "Creating local categories")
+        // IMPORTANTE: Añade tus propios iconos para carpetas si los tienes en res/drawable
+        return listOf(
+            Category(categoryId = PRONOUNS_CATEGORY_ID, name = "Pronombres", displayOrder = 0 /*, iconResourceId = R.drawable.ic_folder_pronouns*/),
+            Category(categoryId = FIXED_VERBS_CATEGORY_ID, name = "Verbos", displayOrder = 1 /*, iconResourceId = R.drawable.ic_folder_verbs*/),
+            Category(categoryId = INITIAL_DYNAMIC_CATEGORY_ID, name = "Comida", displayOrder = 2 /*, iconResourceId = R.drawable.ic_folder_food*/),
+            Category(categoryId = "local_animales", name = "Animales", displayOrder = 3 /*, iconResourceId = R.drawable.ic_folder_animals*/),
+            Category(categoryId = "local_acciones", name = "Acciones", displayOrder = 4 /*, iconResourceId = R.drawable.ic_folder_actions*/),
+            Category(categoryId = "local_objetos", name = "Objetos", displayOrder = 5)
+        )
     }
 
-    fun loadDynamicPictogramsByCategory(category: Category, userLevel: Int? = _currentUser.value?.currentLevel) {
-        if (userLevel == null) {
-            _errorMessage.value = "Nivel de usuario no disponible para cargar pictogramas."
-            return
-        }
+    private fun createLocalPictograms(): List<Pictogram> {
+        Log.d("StudentHomeVM", "Creating local pictograms list")
+        // ¡¡¡RECUERDA!!!
+        // Los nombres de archivo en R.drawable y R.raw deben coincidir
+        // con los archivos que tienes en tus carpetas res/drawable y res/raw.
+        // Ejemplo: R.drawable.picto_yo debe corresponder a un archivo picto_yo.png (o .xml, etc.)
+        // en res/drawable. Y R.raw.audio_yo a un archivo audio_yo.mp3 (u otro formato) en res/raw.
+
+        val pictos = mutableListOf<Pictogram>()
+
+        // --- PRONOMBRES ---
+        // Usando PRONOUNS_CATEGORY_ID = "local_pronombres"
+        pictos.add(Pictogram(pictogramId = "local_pro_001", name = "Yo", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_yo, audioResourceId = R.raw.audio_yo, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_pro_002", name = "Tú", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_tu, audioResourceId = R.raw.audio_tu, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_pro_003", name = "Él", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_el, audioResourceId = R.raw.audio_el, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_pro_004", name = "Ella", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_ella, audioResourceId = R.raw.audio_ella, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_pro_005", name = "Nosotros", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_nosotros, audioResourceId = R.raw.audio_nosotros, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_pro_006", name = "Vosotros", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_vosotros, audioResourceId = R.raw.audio_vosotros, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_pro_007", name = "Ellos", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_ellos, audioResourceId = R.raw.audio_ellos, levelRequired = 1)) // "Ellos/Ellas" - ajusta el 'name' si es necesario
+
+        // --- VERBOS FIJOS ---
+        // Usando FIXED_VERBS_CATEGORY_ID = "local_verbos"
+        pictos.add(Pictogram(pictogramId = "local_vrb_001", name = "Ser", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_ser, audioResourceId = R.raw.audio_ser, levelRequired = 1)) // O "Ser/Estar"
+        pictos.add(Pictogram(pictogramId = "local_vrb_002", name = "Querer", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_querer, audioResourceId = R.raw.audio_querer, levelRequired = 1)) // Asumo que tenías 'picto_querer' aunque no esté en la imagen
+        pictos.add(Pictogram(pictogramId = "local_vrb_003", name = "Ir", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_ir, audioResourceId = R.raw.audio_ir, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_vrb_004", name = "Tener", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_tener, audioResourceId = R.raw.audio_tener, levelRequired = 1)) // Asumo que tenías 'picto_tener'
+        pictos.add(Pictogram(pictogramId = "local_vrb_005", name = "Ver", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_ver, audioResourceId = R.raw.audio_ver, levelRequired = 1)) // Asumo que tenías 'picto_ver'
+        pictos.add(Pictogram(pictogramId = "local_vrb_006", name = "Poder", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_poder, audioResourceId = R.raw.audio_poder, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_vrb_007", name = "Dar", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_dar, audioResourceId = R.raw.audio_dar, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_vrb_008", name = "Venir", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_venir, audioResourceId = R.raw.audio_venir, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_vrb_009", name = "Coger", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_coger, audioResourceId = R.raw.audio_coger, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_vrb_010", name = "Ayudar", category = FIXED_VERBS_CATEGORY_ID, imageResourceId = R.drawable.picto_ayudar, audioResourceId = R.raw.audio_ayudar, levelRequired = 1))
+
+
+        // --- AQUÍ AÑADIRÍAS EL RESTO DE TUS PICTOGRAMAS PARA OTRAS CATEGORÍAS ---
+        // Ejemplo para la categoría inicial dinámica (comida)
+        // private const val INITIAL_DYNAMIC_CATEGORY_ID = "local_comida"
+//        pictos.add(Pictogram(pictogramId = "local_com_001", name = "Manzana", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_manzana, audioResourceId = R.raw.audio_manzana, levelRequired = 1))
+//        pictos.add(Pictogram(pictogramId = "local_com_002", name = "Agua", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_agua, audioResourceId = R.raw.audio_agua, levelRequired = 1))
+//        pictos.add(Pictogram(pictogramId = "local_com_003", name = "Galleta", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_galleta, audioResourceId = R.raw.audio_galleta, levelRequired = 1))
+//        pictos.add(Pictogram(pictogramId = "local_com_004", name = "Leche", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_leche, audioResourceId = R.raw.audio_leche, levelRequired = 2))
+//
+//
+//        // Ejemplo para otra categoría
+//        pictos.add(Pictogram(pictogramId = "local_ani_001", name = "Perro", category = "local_animales", imageResourceId = R.drawable.picto_perro, audioResourceId = R.raw.audio_perro, levelRequired = 1))
+//        pictos.add(Pictogram(pictogramId = "local_ani_002", name = "Gato", category = "local_animales", imageResourceId = R.drawable.picto_gato, audioResourceId = R.raw.audio_gato, levelRequired = 1))
+
+
+        return pictos
+    }
+
+    fun loadDynamicPictogramsByLocalCategory(category: Category, userLevel: Int = _currentUser.value?.currentLevel ?: 1) {
         _isLoading.value = true
         _currentDynamicCategoryName.value = category.name
-        viewModelScope.launch {
-            val result = firestoreRepository.getPictogramsByCategoryAndLevel(category.categoryId, userLevel)
-            if (result.isSuccess) {
-                _dynamicPictograms.value = result.getOrNull() ?: emptyList()
-            } else {
-                _dynamicPictograms.value = emptyList()
-                _errorMessage.value = "Error cargando pictogramas para ${category.name}: ${result.exceptionOrNull()?.message}"
-            }
-            _isLoading.value = false
-        }
+        Log.d("StudentHomeVM", "Loading dynamic pictos for category: ${category.name} (ID: ${category.categoryId}), userLevel: $userLevel")
+        val filteredPictos = allLocalPictograms.filter { it.category == category.categoryId && it.levelRequired <= userLevel }
+        _dynamicPictograms.value = filteredPictos
+        Log.d("StudentHomeVM", "Found ${filteredPictos.size} pictos for ${category.name}")
+        _isLoading.value = false
     }
-
-    private fun getCategoryByName(categoryName: String): Category? {
-        return _availableCategories.value?.find { it.name.equals(categoryName, ignoreCase = true) || it.categoryId.equals(categoryName, ignoreCase = true) }
-    }
-
 
     fun addPictogramToPhrase(pictogram: Pictogram) {
         val currentList = _phrasePictograms.value ?: emptyList()
@@ -169,7 +214,7 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
             _phrasePictograms.value = newList
             updatePlayButtonVisibility()
         } else {
-            _errorMessage.value = "Has alcanzado el límite de ${MAX_PHRASE_PICTOGRAMS} pictogramas en la frase."
+            _errorMessage.value = "Has alcanzado el límite de $MAX_PHRASE_PICTOGRAMS pictogramas."
         }
     }
 
@@ -197,29 +242,73 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        val textToSpeak = phrase.joinToString(separator = " ") { it.name }
-        Log.i("TTS", "Intentando reproducir: $textToSpeak")
+        releaseMediaPlayer() // Detener cualquier reproducción anterior
+        audioQueue.clear()
+        audioQueue.addAll(phrase.mapNotNull { it.audioResourceId.takeIf { id -> id != 0 } })
 
-        // Lógica de TTS (Text-To-Speech)
-        // if (::tts.isInitialized) {
-        //     tts.speak(textToSpeak, TextToSpeech.QUEUE_FLUSH, null, "UtteranceId")
-        // } else {
-        //    _errorMessage.value = "El motor de voz no está listo."
-        // }
-        // Por ahora, solo un Toast o Log
-        _errorMessage.value = "Reproduciendo: $textToSpeak (TTS no implementado aún)"
+        if (audioQueue.isNotEmpty()) {
+            Log.d("StudentHomeVM", "Starting audio queue with ${audioQueue.size} sounds.")
+            playNextAudioFromQueue()
+        } else {
+            val textToSpeak = phrase.joinToString(separator = " ") { it.name }
+            Log.i("StudentHomeVM_TTS", "No local audios in phrase, fallback to TTS (not implemented): $textToSpeak")
+            _errorMessage.value = "Reproduciendo: $textToSpeak (TTS no implementado)"
+            // Aquí iría la lógica de TextToSpeech si no hay audio local para ningún pictograma de la frase.
+        }
     }
 
-    // Necesitarás crear estos métodos en FirestoreRepository.kt
-    // suspend fun getPictogramsByCategory(categoryName: String, userLevel: Int): Result<List<Pictogram>>
-    // suspend fun getStudentCategories(): Result<List<Category>>
+    private fun playNextAudioFromQueue() {
+        if (audioQueue.isEmpty()) {
+            Log.d("StudentHomeVM", "Audio queue finished.")
+            releaseMediaPlayer()
+            return
+        }
 
+        val audioResId = audioQueue.removeAt(0)
+        Log.d("StudentHomeVM", "Playing next audio from queue: ResId $audioResId. Remaining: ${audioQueue.size}")
+
+        // Asegúrate de que mediaPlayer se crea en el hilo principal si hay problemas de UI/Looper
+        try {
+            mediaPlayer = MediaPlayer.create(getApplication(), audioResId)
+            if (mediaPlayer == null) {
+                Log.e("StudentHomeVM_MediaPlayer", "MediaPlayer.create failed for ResId $audioResId (returned null). Skipping.")
+                playNextAudioFromQueue() // Intenta el siguiente
+                return
+            }
+
+            mediaPlayer?.setOnCompletionListener {
+                Log.d("StudentHomeVM_MediaPlayer", "Audio ResId $audioResId completed.")
+                // No es necesario liberar 'it' aquí, ya que 'mediaPlayer' es una propiedad de clase
+                playNextAudioFromQueue() // Reproduce el siguiente
+            }
+            mediaPlayer?.setOnErrorListener { mp, what, extra ->
+                Log.e("StudentHomeVM_MediaPlayer", "Error during playback: what=$what, extra=$extra for ResId=$audioResId")
+                releaseMediaPlayer() // Liberar en caso de error
+                playNextAudioFromQueue() // Intenta el siguiente de la cola
+                true
+            }
+            mediaPlayer?.start()
+        } catch (e: Exception) {
+            Log.e("StudentHomeVM_MediaPlayer", "Exception creating or starting MediaPlayer for ResId=$audioResId", e)
+            releaseMediaPlayer()
+            playNextAudioFromQueue() // Intenta el siguiente
+        }
+    }
+
+    private fun releaseMediaPlayer() {
+        mediaPlayer?.apply {
+            if (isPlaying) {
+                stop()
+            }
+            release()
+        }
+        mediaPlayer = null
+        Log.d("StudentHomeVM", "MediaPlayer released.")
+    }
 
     override fun onCleared() {
         super.onCleared()
-        // if (::tts.isInitialized) {
-        //     tts.stop()
-        //     tts.shutdown()
-        // }
+        Log.d("StudentHomeVM", "ViewModel onCleared, releasing MediaPlayer.")
+        releaseMediaPlayer()
     }
 }

@@ -2,27 +2,27 @@ package com.example.pictovoice.ui.home // Asegúrate que el package es correcto
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.activity.viewModels // Para by viewModels
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider // Para ViewModelProvider si no usas by viewModels directamente
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.pictovoice.Data.Model.Pictogram
+import com.example.pictovoice.Data.Model.Category // Importa tu modelo de Category
 import com.example.pictovoice.adapters.CategoryAdapter
 import com.example.pictovoice.adapters.PhrasePictogramAdapter
 import com.example.pictovoice.adapters.SelectionPictogramAdapter
 import com.example.pictovoice.databinding.ActivityHomeBinding
-import com.example.pictovoice.ui.auth.MainActivity // Para logout o si el usuario no está autenticado
-import com.example.pictovoice.viewmodels.StudentHomeViewModel // Tu nuevo ViewModel
+import com.example.pictovoice.ui.auth.MainActivity
+import com.example.pictovoice.viewmodels.StudentHomeViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
-    private val viewModel: StudentHomeViewModel by viewModels() // Inyecta el ViewModel
+    private val viewModel: StudentHomeViewModel by viewModels()
 
     private lateinit var phraseAdapter: PhrasePictogramAdapter
     private lateinit var pronounsAdapter: SelectionPictogramAdapter
@@ -37,8 +37,10 @@ class HomeActivity : AppCompatActivity() {
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Verificar autenticación
+        Log.d("HomeActivity", "onCreate called")
+
         if (firebaseAuth.currentUser == null) {
+            Log.w("HomeActivity", "User not authenticated, navigating to login.")
             navigateToLogin()
             return
         }
@@ -47,13 +49,16 @@ class HomeActivity : AppCompatActivity() {
         setupClickListeners()
         observeViewModel()
 
-        // Cargar datos iniciales
+        // Los datos locales de pictogramas y categorías se cargan en el init del ViewModel.
+        // Cargar datos del usuario actual (como nivel) desde Firestore.
         firebaseAuth.currentUser?.uid?.let { userId ->
-            viewModel.loadInitialData(userId)
+            Log.d("HomeActivity", "Loading user data for UID: $userId")
+            viewModel.loadCurrentUserData(userId)
         }
     }
 
     private fun setupRecyclerViews() {
+        Log.d("HomeActivity", "Setting up RecyclerViews")
         // Adaptador para la frase
         phraseAdapter = PhrasePictogramAdapter()
         binding.rvPhrasePictograms.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -61,6 +66,7 @@ class HomeActivity : AppCompatActivity() {
 
         // Adaptador para pronombres
         pronounsAdapter = SelectionPictogramAdapter { pictogram ->
+            Log.d("HomeActivity", "Pronoun clicked: ${pictogram.name}")
             viewModel.addPictogramToPhrase(pictogram)
         }
         binding.rvPronouns.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -68,6 +74,7 @@ class HomeActivity : AppCompatActivity() {
 
         // Adaptador para verbos fijos
         fixedVerbsAdapter = SelectionPictogramAdapter { pictogram ->
+            Log.d("HomeActivity", "Fixed verb clicked: ${pictogram.name}")
             viewModel.addPictogramToPhrase(pictogram)
         }
         binding.rvFixedVerbs.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -75,33 +82,40 @@ class HomeActivity : AppCompatActivity() {
 
         // Adaptador para pictogramas dinámicos
         dynamicPictogramsAdapter = SelectionPictogramAdapter { pictogram ->
+            Log.d("HomeActivity", "Dynamic pictogram clicked: ${pictogram.name}")
             viewModel.addPictogramToPhrase(pictogram)
         }
-        // El spanCount es el de tu XML, ajústalo si es necesario
-        binding.rvDynamicPictograms.layoutManager = GridLayoutManager(this, 6) // Span count del XML
+        // Asegúrate que el spanCount en tu XML (activity_home.xml para rvDynamicPictograms)
+        // coincide o ajusta este valor.
+        val defaultSpanCount = 6 // O el valor de tu XML
+        binding.rvDynamicPictograms.layoutManager = GridLayoutManager(this, defaultSpanCount)
         binding.rvDynamicPictograms.adapter = dynamicPictogramsAdapter
 
         // Adaptador para categorías
         categoryAdapter = CategoryAdapter { category ->
-            viewModel.loadDynamicPictogramsByCategory(category)
+            Log.d("HomeActivity", "Category clicked: ${category.name}")
+            viewModel.loadDynamicPictogramsByLocalCategory(category)
         }
         binding.categoryNavigationContainer.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.categoryNavigationContainer.adapter = categoryAdapter
     }
 
     private fun setupClickListeners() {
+        Log.d("HomeActivity", "Setting up ClickListeners")
         binding.btnPlayPhrase.setOnClickListener {
+            Log.d("HomeActivity", "Play Phrase button clicked")
             viewModel.onPlayPhraseClicked()
         }
 
         binding.btnDeletePictogram.setOnClickListener {
+            Log.d("HomeActivity", "Delete Pictogram button clicked (short)")
             viewModel.deleteLastPictogramFromPhrase()
         }
 
         binding.btnDeletePictogram.setOnLongClickListener {
-            // Confirmación para borrar toda la frase
+            Log.d("HomeActivity", "Delete Pictogram button clicked (LONG)")
             AlertDialog.Builder(this)
-                .setTitle("Borrar Frase")
+                .setTitle("Borrar Frase Completa")
                 .setMessage("¿Estás seguro de que quieres borrar toda la frase?")
                 .setPositiveButton("Sí, borrar") { dialog, _ ->
                     viewModel.clearPhrase()
@@ -114,54 +128,70 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
+        Log.d("HomeActivity", "Observing ViewModel LiveData")
         viewModel.phrasePictograms.observe(this) { pictograms ->
-            phraseAdapter.submitList(pictograms)
-            // Scroll al final de la frase si es necesario
-            if (pictograms.isNotEmpty()) {
+            Log.d("HomeActivity", "Phrase pictograms updated: ${pictograms?.size ?: 0} items")
+            phraseAdapter.submitList(pictograms?.toList()) // Enviar una copia de la lista para DiffUtil
+            if (pictograms?.isNotEmpty() == true) {
                 binding.rvPhrasePictograms.smoothScrollToPosition(pictograms.size - 1)
             }
         }
 
         viewModel.playButtonVisibility.observe(this) { isVisible ->
+            Log.d("HomeActivity", "Play button visibility changed: $isVisible")
             binding.btnPlayPhrase.visibility = if (isVisible) View.VISIBLE else View.GONE
         }
 
         viewModel.pronounPictograms.observe(this) { pictograms ->
-            pronounsAdapter.submitList(pictograms)
+            Log.d("HomeActivity", "Pronoun pictograms updated: ${pictograms?.size ?: 0} items")
+            pronounsAdapter.submitList(pictograms?.toList())
         }
 
         viewModel.fixedVerbPictograms.observe(this) { pictograms ->
-            fixedVerbsAdapter.submitList(pictograms)
+            Log.d("HomeActivity", "Fixed verb pictograms updated: ${pictograms?.size ?: 0} items")
+            fixedVerbsAdapter.submitList(pictograms?.toList())
         }
 
         viewModel.dynamicPictograms.observe(this) { pictograms ->
-            dynamicPictogramsAdapter.submitList(pictograms)
+            Log.d("HomeActivity", "Dynamic pictograms updated: ${pictograms?.size ?: 0} items. Category: ${viewModel.currentDynamicCategoryName.value}")
+            dynamicPictogramsAdapter.submitList(pictograms?.toList())
         }
 
         viewModel.currentDynamicCategoryName.observe(this) { categoryName ->
+            Log.d("HomeActivity", "Current dynamic category name updated: $categoryName")
             binding.tvCurrentCategoryName.text = categoryName
         }
 
         viewModel.availableCategories.observe(this) { categories ->
-            categoryAdapter.submitList(categories)
+            Log.d("HomeActivity", "Available categories updated: ${categories?.size ?: 0} items")
+            categoryAdapter.submitList(categories?.toList())
         }
 
         viewModel.isLoading.observe(this) { isLoading ->
+            Log.d("HomeActivity", "isLoading state changed: $isLoading")
             // Aquí manejarías un ProgressBar general para la pantalla si lo tuvieras
-            // binding.homeProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-            if(isLoading) Toast.makeText(this, "Cargando...", Toast.LENGTH_SHORT).show() // Placeholder
+            // binding.overallProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            if(isLoading) {
+                // Podrías mostrar un Toast o un indicador de carga más sutil
+                // Toast.makeText(this, "Cargando...", Toast.LENGTH_SHORT).show()
+            }
         }
 
         viewModel.errorMessage.observe(this) { errorMessage ->
             errorMessage?.let {
+                Log.e("HomeActivity", "Error message received: $it")
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
-                // Podrías tener un TextView para errores más persistentes
+                // Limpiar el mensaje para que no se muestre repetidamente en rotaciones, etc.
+                // viewModel.clearErrorMessage() // Necesitarías este método en el VM
             }
         }
 
         viewModel.currentUser.observe(this) { user ->
-            // Actualizar UI con datos del usuario si es necesario (ej. nombre, nivel)
-            // supportActionBar?.title = "Hola, ${user?.fullName ?: "Usuario"}"
+            user?.let {
+                Log.d("HomeActivity", "Current user data updated: ${it.fullName}, Level: ${it.currentLevel}")
+                // Por ejemplo, actualizar el título de la activity o un TextView de bienvenida
+                // supportActionBar?.title = "PictoVoice - ${it.fullName}"
+            }
         }
     }
 
@@ -170,5 +200,11 @@ class HomeActivity : AppCompatActivity() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("HomeActivity", "onDestroy called")
+        // El ViewModel se encarga de liberar el MediaPlayer en su onCleared()
     }
 }

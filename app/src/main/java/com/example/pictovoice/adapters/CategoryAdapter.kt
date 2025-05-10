@@ -7,14 +7,14 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pictovoice.Data.Model.Category // Importa tu modelo Category
 import com.example.pictovoice.databinding.ItemCategoryFolderBinding
-// import com.bumptech.glide.Glide // Si tus categorías tienen iconos para cargar con Glide
+// import com.bumptech.glide.Glide // Si tus categorías tienen iconos URL
 
 class CategoryAdapter(
     private val onCategoryClick: (Category) -> Unit
 ) : ListAdapter<Category, CategoryAdapter.ViewHolder>(CategoryDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemCategoryFolderBinding.inflate(
+        val binding = ItemCategoryFolderBinding.inflate( // Asegúrate que item_category_folder.xml existe
             LayoutInflater.from(parent.context),
             parent,
             false
@@ -31,14 +31,21 @@ class CategoryAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(category: Category, onCategoryClick: (Category) -> Unit) {
+            // Asegúrate que en tu res/layout/item_category_folder.xml existe un Button o TextView
+            // con android:id="@+id/btnCategoryFolder"
             binding.btnCategoryFolder.text = category.name
-            // Si las categorías tuvieran iconos que cargar:
-            // if (category.iconUrl != null) {
-            //     Glide.with(binding.btnCategoryFolder.context) // o un ImageView dedicado en el item
+
+            // Si las categorías tuvieran iconos locales o URL:
+            // if (category.iconResourceId != 0) {
+            //    binding.ivCategoryIcon.setImageResource(category.iconResourceId) // Necesitarías un ImageView ivCategoryIcon
+            // } else if (category.iconUrl != null) {
+            //     Glide.with(binding.ivCategoryIcon.context)
             //         .load(category.iconUrl)
-            //         .into(binding.btnCategoryFolder) // necesitarías un ImageView
+            //         .into(binding.ivCategoryIcon)
             // }
-            binding.btnCategoryFolder.setOnClickListener {
+
+            // El click listener puede ser en el root del item o en el botón específico
+            binding.root.setOnClickListener { // o binding.btnCategoryFolder.setOnClickListener
                 onCategoryClick(category)
             }
         }

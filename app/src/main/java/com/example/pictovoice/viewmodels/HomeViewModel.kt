@@ -32,25 +32,36 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             _errorMessage.value = null
 
             try {
-                when (val userResult = repository.getUser(userId)) {
-                    is Result.Success -> {
-                        _userData.value = userResult.data
-                        userResult.data?.let { user ->
-                            val maxLevel = if (user.role == "teacher") Int.MAX_VALUE else user.currentLevel
-                            val categories = user.unlockedCategories
+                // Usamos kotlin.Result como está definido en FirestoreRepository
+                val userResult = repository.getUser(userId) // Esto devuelve kotlin.Result<User?>
 
-                            if (categories.isNotEmpty()) {
-                                when (val pictogramsResult = repository.getPictogramsByCategoryAndLevel(
-                                    categories.first(),
-                                    maxLevel
-                                )) {
-                                    is Result.Success -> _pictograms.value = pictogramsResult.data
-                                    is Result.Failure -> _errorMessage.value = "Error al cargar pictogramas"
-                                }
+                if (userResult.isSuccess) {
+                    val user: User? = userResult.getOrNull() // Obtiene el User o null
+                    _userData.value = user
+                    user?.let { validUser -> // Solo procede si el usuario no es null
+                        // Determina el nivel máximo para cargar pictogramas
+                        val maxLevel = if (validUser.role == "teacher") Int.MAX_VALUE else validUser.currentLevel
+                        val categoriesToLoad = validUser.unlockedCategories.ifEmpty { listOf("basico") } // Carga "basico" si no hay ninguna
+
+                        // Cargar pictogramas para la primera categoría desbloqueada (o "basico")
+                        // Podrías querer una lógica más compleja para múltiples categorías aquí
+                        if (categoriesToLoad.isNotEmpty()) {
+                            val pictogramsResult = repository.getPictogramsByCategoryAndLevel(
+                                categoriesToLoad.first(), // Carga para la primera categoría de la lista
+                                maxLevel
+                            ) // Esto devuelve kotlin.Result<List<Pictogram>>
+
+                            if (pictogramsResult.isSuccess) {
+                                _pictograms.value = pictogramsResult.getOrNull() ?: emptyList()
+                            } else {
+                                _errorMessage.value = "Error al cargar pictogramas: ${pictogramsResult.exceptionOrNull()?.message}"
                             }
+                        } else {
+                            _pictograms.value = emptyList() // No hay categorías para cargar
                         }
                     }
-                    is Result.Failure -> _errorMessage.value = "Error al cargar datos del usuario"
+                } else { // userResult.isFailure
+                    _errorMessage.value = "Error al cargar datos del usuario: ${userResult.exceptionOrNull()?.message}"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Error inesperado: ${e.message}"
@@ -63,19 +74,21 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun onPictogramSelected(userId: String, pictogram: Pictogram) {
         viewModelScope.launch {
             _userData.value?.takeIf { it.role == "student" }?.let { user ->
-                repository.incrementPictogramUsage(pictogram.pictogramId)
+                // Incrementar uso del pictograma (si aún lo necesitas desde Firestore)
+                // repository.incrementPictogramUsage(pictogram.pictogramId) // Descomenta si es necesario
 
-                when (val result = repository.addExperienceToStudent(userId, pictogram.baseExp)) {
-                    is Result.Success -> {
-                        _userData.value = user.copy(
-                            currentExp = result.data.first,
-                            currentLevel = result.data.second,
-                            totalExp = user.totalExp + pictogram.baseExp
-                        )
-                    }
-                    is Result.Failure -> {
-                        _errorMessage.value = result.message ?: "Error al actualizar experiencia"
-                    }
+                // Añadir experiencia
+                val expResult = repository.addExperienceToStudent(userId, pictogram.baseExp)
+
+                if (expResult.isSuccess) {
+                    val (newExp, newLevel) = expResult.getOrThrow() // Par (Int, Int)
+                    _userData.value = user.copy(
+                        currentExp = newExp,
+                        currentLevel = newLevel,
+                        totalExp = user.totalExp + pictogram.baseExp // Asegúrate que totalExp se actualiza correctamente
+                    )
+                } else {
+                    _errorMessage.value = expResult.exceptionOrNull()?.message ?: "Error al actualizar experiencia"
                 }
             }
         }

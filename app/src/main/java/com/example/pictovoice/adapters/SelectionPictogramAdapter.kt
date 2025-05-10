@@ -1,13 +1,12 @@
-package com.example.pictovoice.adapters // Asegúrate que el package es correcto
+package com.example.pictovoice.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.example.pictovoice.Data.Model.Pictogram
-import com.example.pictovoice.R
+import com.example.pictovoice.R // Para el placeholder
 import com.example.pictovoice.databinding.ItemPictogramSelectionBinding
 
 class SelectionPictogramAdapter(
@@ -32,16 +31,16 @@ class SelectionPictogramAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(pictogram: Pictogram, onItemClick: (Pictogram) -> Unit) {
-            if (pictogram.imageUrl.isNotBlank()) {
-                Glide.with(binding.ivSelectionPictogramImage.context)
-                    .load(pictogram.imageUrl)
-                    .placeholder(R.drawable.ic_placeholder_image)
-                    .error(R.drawable.ic_error_image)
-                    .into(binding.ivSelectionPictogramImage)
+            if (pictogram.imageResourceId != 0) {
+                binding.ivSelectionPictogramImage.setImageResource(pictogram.imageResourceId)
             } else {
+                // Fallback o placeholder si no hay resourceId
                 binding.ivSelectionPictogramImage.setImageResource(R.drawable.ic_placeholder_image)
             }
-            // El texto está en la imagen, no se setea aquí.
+            // El nombre del pictograma (tvSelectionPictogramName) ya no está en tu item_pictogram_selection.xml
+            // Si lo añadieras al XML, aquí podrías poner:
+            // binding.tvSelectionPictogramName.text = pictogram.name
+
             binding.root.setOnClickListener {
                 onItemClick(pictogram)
             }

@@ -2,64 +2,68 @@ package com.example.pictovoice.utils
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pictovoice.Data.Model.User
+// import com.example.pictovoice.Data.Model.User
 import com.example.pictovoice.Data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// (Revisar esta definición de AuthResult si no la has adaptado antes)
-sealed class AuthResult {
-    object Idle : AuthResult()
-    object Loading : AuthResult()
-    // Success ahora puede llevar datos, como el username generado en el registro
-    data class Success(val data: Any? = null) : AuthResult()
-    data class Error(val message: String) : AuthResult()
+sealed class AuthResult<out T> { // Hacerlo genérico
+    object Idle : AuthResult<Nothing>()
+    object Loading : AuthResult<Nothing>()
+    data class Success<out T>(val data: T) : AuthResult<T>() // data es de tipo T
+    data class Error(val message: String) : AuthResult<Nothing>() // Error no necesita T
 
     val isLoading get() = this is Loading
-    val isSuccess get() = this is Success
-    val error get() = (this as? Error)?.message
+    // val isSuccess get() = this is Success // Puedes mantenerlo o acceder a 'data' directamente
+    // val error get() = (this as? Error)?.message // No se puede castear a AuthResult.Error directamente
+    fun getErrorMessage(): String? {
+        return if (this is Error) this.message else null
+    }
 }
 
 
 class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
 
-    private val _loginResult = MutableStateFlow<AuthResult>(AuthResult.Idle)
-    val loginResult: StateFlow<AuthResult> = _loginResult
+    // loginResult ahora es AuthResult<User>
+    private val _loginResult = MutableStateFlow<AuthResult<User>>(AuthResult.Idle)
+    val loginResult: StateFlow<AuthResult<User>> = _loginResult
 
-    private val _registerResult = MutableStateFlow<AuthResult>(AuthResult.Idle)
-    val registerResult: StateFlow<AuthResult> = _registerResult
+    // registerResult ahora es AuthResult<String> (para el username)
+    private val _registerResult = MutableStateFlow<AuthResult<String>>(AuthResult.Idle)
+    val registerResult: StateFlow<AuthResult<String>> = _registerResult
 
-    // El login ahora recibe un "identifier" que puede ser username o email
     fun login(identifier: String, password: String) {
         _loginResult.value = AuthResult.Loading
         viewModelScope.launch {
-            try {
-                val result = authRepository.login(identifier, password) // El repo maneja la lógica
-                if (result.isSuccess) {
-                    _loginResult.value = AuthResult.Success() // No se necesita pasar data aquí para login
+            val result = authRepository.login(identifier, password)
+            if (result.isSuccess) {
+                val user = result.getOrNull()
+                if (user != null) {
+                    _loginResult.value = AuthResult.Success(user)
                 } else {
-                    _loginResult.value = AuthResult.Error(result.exceptionOrNull()?.message ?: "Error desconocido en login")
+                    _loginResult.value = AuthResult.Error("Error inesperado al obtener datos del usuario.")
                 }
-            } catch (e: Exception) {
-                _loginResult.value = AuthResult.Error(e.message ?: "Excepción en login")
+            } else {
+                _loginResult.value = AuthResult.Error(result.exceptionOrNull()?.message ?: "Error desconocido en login")
             }
         }
     }
 
-    // Register ya no recibe username, se generará en el repositorio
     fun register(fullName: String, email: String, password: String, role: String) {
         _registerResult.value = AuthResult.Loading
         viewModelScope.launch {
-            try {
-                val result = authRepository.register(fullName, email, password, role)
-                if (result.isSuccess) {
-                    // El resultado exitoso del repositorio debería contener el username generado
-                    _registerResult.value = AuthResult.Success(result.getOrNull()) // getOrNull() de kotlin.Result
+            val result = authRepository.register(fullName, email, password, role) // Devuelve kotlin.Result<String>
+            if (result.isSuccess) {
+                val username = result.getOrNull()
+                if (username != null) {
+                    _registerResult.value = AuthResult.Success(username) // Pasar el username (String)
                 } else {
-                    _registerResult.value = AuthResult.Error(result.exceptionOrNull()?.message ?: "Error desconocido en registro")
+                    _registerResult.value = AuthResult.Error("No se pudo obtener el username generado.")
                 }
-            } catch (e: Exception) {
-                _registerResult.value = AuthResult.Error(e.message ?: "Excepción en registro")
+            } else {
+                _registerResult.value = AuthResult.Error(result.exceptionOrNull()?.message ?: "Error desconocido en registro")
             }
         }
     }

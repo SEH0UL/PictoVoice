@@ -17,6 +17,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.teacher.TeacherHomeActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.auth.RegisterActivity"
             android:exported="false" />
 

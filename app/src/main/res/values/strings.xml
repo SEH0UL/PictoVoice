@@ -14,4 +14,9 @@
     <string name="Rol_Teacher">Soy profesor</string>
     <string name="Rol_Alumno">Soy alumno</string>
     <string name="Email_Register">Correo Electrónico</string>
+    <string name="Delete_Pictogram">Borrar último pictograma</string>
+    <string name="editar_clase">Editar Clase</string>
+    <string name="Delete_class">Eliminar Clase</string>
+    <string name="txtButtonAcceder">Acceder</string>
+    <string name="teacher_name_not_found">Nombre de profesor no encontrado</string>
 </resources>

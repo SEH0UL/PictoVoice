@@ -1,144 +1,159 @@
 package com.example.pictovoice.Data.repository
 
 import android.util.Log
-import android.util.Patterns // Para chequear si el identifier es un email
 import com.example.pictovoice.Data.Model.User
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
-import java.util.Locale // Para normalizar a mayúsculas/minúsculas
+import kotlinx.coroutines.withContext
+import java.util.Locale
 
 class AuthRepository {
     private val firebaseAuth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
     private val usersCollection = firestore.collection("users")
 
+    // Función para verificar si el usuario ya está logueado
     fun isUserLoggedIn(): Boolean {
         return firebaseAuth.currentUser != null
     }
 
-    // --- LOGIN DUAL (EMAIL O USERNAME) ---
-    suspend fun login(identifier: String, password: String): kotlin.Result<String?> { // Devuelve UID o null
-        return try {
-            var emailToUse: String? = null
+    suspend fun generateUniqueUsername(fullName: String): String {
+        val nameParts = fullName.split(" ").filter { it.isNotBlank() }
+        if (nameParts.isEmpty()) return "USER${System.currentTimeMillis()}"
 
-            // Estrategia 1: Comprobar si el identifier parece un email
-            if (Patterns.EMAIL_ADDRESS.matcher(identifier).matches()) {
-                emailToUse = identifier
-                Log.d("AuthRepository", "Login attempt with identifier as email: $identifier")
-            } else {
-                // Estrategia 2: Si no es un email, buscar por username en Firestore
-                Log.d("AuthRepository", "Identifier not an email, searching for username: $identifier")
-                val querySnapshot = usersCollection.whereEqualTo("username", identifier.toUpperCase(Locale.ROOT)).limit(1).get().await()
-                if (!querySnapshot.isEmpty) {
-                    val userDoc = querySnapshot.documents.first()
-                    emailToUse = userDoc.getString("email")
-                    Log.d("AuthRepository", "Username found. Email to use for auth: $emailToUse")
-                } else {
-                    Log.d("AuthRepository", "Username '$identifier' not found in Firestore.")
-                    // Si no es email y no se encuentra como username, podría ser un intento de login con un email mal formado
-                    // o un username inexistente. Intentamos como email por si acaso era un email sin '@' etc.
-                    // Opcionalmente, podrías fallar aquí directamente si exiges que los usernames no parezcan emails.
-                    // Por ahora, si no se encontró username, no se hace nada más con Firestore y se dependerá de si emailToUse (que sería null)
-                    // causa un fallo más adelante, o si el 'identifier' original era un email que Firebase pueda procesar.
-                }
-            }
-
-            if (emailToUse.isNullOrEmpty() && !Patterns.EMAIL_ADDRESS.matcher(identifier).matches()) {
-                // Si no pudimos determinar un email y el identificador original no era un email, fallamos.
-                return kotlin.Result.failure(Exception("Usuario o correo no válido."))
-            }
-
-            val finalEmailForAuth = emailToUse ?: identifier // Usar el email encontrado o el identificador original si era un email
-
-            // Autenticar con Firebase Auth
-            val authResult = firebaseAuth.signInWithEmailAndPassword(finalEmailForAuth, password).await()
-            val firebaseUser = authResult.user
-
-            if (firebaseUser != null) {
-                usersCollection.document(firebaseUser.uid).update("lastLogin", com.google.firebase.Timestamp.now()).await()
-                kotlin.Result.success(firebaseUser.uid)
-            } else {
-                kotlin.Result.failure(Exception("Error de autenticación."))
-            }
-
-        } catch (e: Exception) {
-            Log.e("AuthRepository", "Error en login: ${e.message}", e)
-            kotlin.Result.failure(Exception("Usuario, correo o contraseña incorrectos."))
+        // Para el nombre completo, usamos toUpperCase(Locale.ROOT) para asegurar consistencia
+        // independientemente del Locale del dispositivo, especialmente para identificadores.
+        val firstName = nameParts.first().toUpperCase(Locale.ROOT)
+        val baseUsername = if (nameParts.size > 1) {
+            // CORRECCIÓN: Convertir el Char a String ANTES de llamar toUpperCase(Locale)
+            val lastNameInitial = nameParts.last().first().toString().toUpperCase(Locale.ROOT)
+            "$firstName$lastNameInitial"
+        } else {
+            firstName
         }
-    }
 
-    // --- REGISTER CON GENERACIÓN DE USERNAME ---
-    // Devuelve kotlin.Result<String> donde String es el username generado
-    suspend fun register(fullName: String, email: String, password: String, role: String): kotlin.Result<String> {
-        try {
-            // 1. Verificar si el email ya está en uso en Auth (Firestore check es opcional aquí)
-            val emailQueryAuth = firebaseAuth.fetchSignInMethodsForEmail(email).await()
-            if (emailQueryAuth.signInMethods != null && emailQueryAuth.signInMethods!!.isNotEmpty()) {
-                return kotlin.Result.failure(Exception("El correo electrónico ya está registrado."))
-            }
-
-            // 2. Generar el nombre de usuario y asegurar unicidad
-            val generatedUsername = generateUniqueUsername(fullName)
-
-            // 3. Crear usuario en Firebase Authentication
-            val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            val firebaseUser = authResult.user
-                ?: return kotlin.Result.failure(Exception("No se pudo crear el usuario en Firebase Auth."))
-
-            // 4. Actualizar perfil de Firebase Auth (opcional)
-            val profileUpdates = UserProfileChangeRequest.Builder()
-                .setDisplayName(generatedUsername) // Usar el username generado
-                .build()
-            firebaseUser.updateProfile(profileUpdates).await()
-
-            // 5. Crear objeto User para Firestore
-            val newUser = User(
-                userId = firebaseUser.uid,
-                username = generatedUsername, // Guardar el username generado y normalizado
-                fullName = fullName,
-                email = email,
-                role = role,
-                createdAt = com.google.firebase.Timestamp.now(),
-                lastLogin = com.google.firebase.Timestamp.now()
-            )
-
-            // 6. Guardar usuario en Firestore
-            usersCollection.document(firebaseUser.uid).set(newUser.toMap()).await()
-            return kotlin.Result.success(generatedUsername) // Devolver el username generado
-
-        } catch (e: FirebaseAuthUserCollisionException) {
-            Log.w("AuthRepository", "Error de registro: Email ya en uso (debería haber sido capturado antes). ${e.message}")
-            return kotlin.Result.failure(Exception("El correo electrónico ya está registrado."))
-        } catch (e: Exception) {
-            Log.e("AuthRepository", "Error en registro: ${e.message}", e)
-            return kotlin.Result.failure(Exception("Error durante el registro: ${e.message}"))
-        }
-    }
-
-    // Función para generar username único
-    private suspend fun generateUniqueUsername(fullName: String): String {
-        val parts = fullName.trim().split(" ").filter { it.isNotBlank() }
-        val namePart = if (parts.isNotEmpty()) parts[0].take(3) else "USR"
-        val lastNamePart = if (parts.size > 1) parts[1].take(3) else namePart.takeLast(3) // Usa nombre si no hay apellido
-
-        val nameLength = fullName.replace(" ", "").length
-
-        var baseUsername = (namePart + lastNamePart + nameLength).toUpperCase(Locale.ROOT)
         var finalUsername = baseUsername
-        var suffix = 0
-
+        var counter = 0
         // Bucle para asegurar unicidad
         while (true) {
-            val querySnapshot = usersCollection.whereEqualTo("username", finalUsername).limit(1).get().await()
+            // Comparamos con el username en Firestore que también debería estar en mayúsculas (según esta lógica)
+            val querySnapshot = usersCollection.whereEqualTo("username", finalUsername).get().await()
             if (querySnapshot.isEmpty) {
                 break // Username es único
             }
-            suffix++
-            finalUsername = "$baseUsername$suffix"
+            counter++
+            finalUsername = "$baseUsername$counter"
         }
         return finalUsername
+    }
+
+
+    // LOGIN: Ahora devuelve kotlin.Result<User>
+    suspend fun login(identifier: String, password: String): kotlin.Result<User> = withContext(Dispatchers.IO) {
+        try {
+            var userId: String? = null
+            var userEmail: String? = null
+
+            // Paso 1: Determinar si el identifier es un email o un username
+            if (identifier.contains("@")) { // Asumimos que es un email
+                userEmail = identifier.toLowerCase(Locale.ROOT) // Normalizar email a minúsculas
+            } else { // Asumimos que es un username
+                // Buscamos el username en mayúsculas, ya que así se genera y se guarda
+                val userQuery = usersCollection.whereEqualTo("username", identifier.toUpperCase(Locale.ROOT)).limit(1).get().await()
+                if (userQuery.isEmpty) {
+                    return@withContext kotlin.Result.failure(Exception("Usuario no encontrado."))
+                }
+                val foundUser = User.fromSnapshot(userQuery.documents.first())
+                if (foundUser == null || foundUser.email.isBlank()) {
+                    return@withContext kotlin.Result.failure(Exception("No se pudo obtener el email del usuario."))
+                }
+                userEmail = foundUser.email // El email ya debería estar normalizado en Firestore
+            }
+
+            if (userEmail.isNullOrBlank()) {
+                return@withContext kotlin.Result.failure(Exception("Identificador de usuario no válido."))
+            }
+
+            // Paso 2: Autenticar con Firebase Auth usando el email
+            val authResult = firebaseAuth.signInWithEmailAndPassword(userEmail, password).await()
+            val firebaseUser = authResult.user
+            if (firebaseUser == null) {
+                return@withContext kotlin.Result.failure(Exception("Error de autenticación de Firebase."))
+            }
+            userId = firebaseUser.uid // UID de Firebase Auth
+
+            // Paso 3: Obtener el documento del usuario de Firestore
+            val userDocument = usersCollection.document(userId).get().await()
+            if (!userDocument.exists()) {
+                firebaseAuth.signOut()
+                return@withContext kotlin.Result.failure(Exception("Datos del usuario no encontrados en la base de datos."))
+            }
+
+            val user = User.fromSnapshot(userDocument)
+            if (user == null) {
+                firebaseAuth.signOut()
+                return@withContext kotlin.Result.failure(Exception("No se pudieron procesar los datos del usuario."))
+            }
+
+            // Opcional: Actualizar lastLogin
+            usersCollection.document(userId).update("lastLogin", com.google.firebase.Timestamp.now()).await()
+
+            kotlin.Result.success(user)
+
+        } catch (e: FirebaseAuthInvalidUserException) {
+            Log.w("AuthRepository", "Login fallido: Usuario no existe o deshabilitado.", e)
+            kotlin.Result.failure(Exception("Usuario o contraseña incorrectos."))
+        } catch (e: FirebaseAuthInvalidCredentialsException) {
+            Log.w("AuthRepository", "Login fallido: Credenciales incorrectas.", e)
+            kotlin.Result.failure(Exception("Usuario o contraseña incorrectos."))
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error durante el login: ${e.message}", e)
+            kotlin.Result.failure(Exception("Error durante el login: ${e.localizedMessage}"))
+        }
+    }
+
+    suspend fun register(fullName: String, email: String, password: String, role: String): kotlin.Result<String> = withContext(Dispatchers.IO) {
+        try {
+            // Paso 1: Crear usuario en Firebase Auth (Firebase Auth maneja la normalización del email para la autenticación)
+            val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+            val firebaseUser = authResult.user
+            if (firebaseUser == null) {
+                return@withContext kotlin.Result.failure(Exception("No se pudo crear el usuario en Firebase Auth."))
+            }
+
+            // Paso 2: Generar username único (la función generateUniqueUsername ya lo devuelve en mayúsculas)
+            val username = generateUniqueUsername(fullName)
+
+            // Paso 3: Crear objeto User
+            val newUser = User(
+                userId = firebaseUser.uid,
+                username = username, // Ya está en mayúsculas
+                fullName = fullName,
+                email = email.toLowerCase(Locale.ROOT), // Guardar email normalizado en Firestore
+                role = role,
+                createdAt = com.google.firebase.Timestamp.now(),
+                lastLogin = com.google.firebase.Timestamp.now(),
+                unlockedCategories = if (role == "student") listOf("basico") else emptyList()
+            )
+
+            // Paso 4: Guardar usuario en Firestore
+            usersCollection.document(firebaseUser.uid).set(newUser.toMap()).await()
+
+            kotlin.Result.success(username)
+
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error durante el registro: ${e.message}", e)
+            // Considerar la limpieza si el usuario se creó en Auth pero falló en Firestore
+            // firebaseUser?.delete()?.await() // Esto requiere reautenticación reciente y es complejo de manejar aquí.
+            kotlin.Result.failure(Exception("Error durante el registro: ${e.localizedMessage}"))
+        }
+    }
+
+    fun logout() {
+        firebaseAuth.signOut()
     }
 }

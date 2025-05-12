@@ -26,17 +26,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btnDeletePictogram"
             app:layout_constraintTop_toTopOf="parent"
+
             app:layout_constraintBottom_toBottomOf="parent"
             tools:listitem="@layout/item_pictogram_phrase"
             tools:itemCount="3"/>
 
         <ImageButton
             android:id="@+id/btnDeletePictogram"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_backspace_outline"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Borrar último pictograma"
+            android:contentDescription="@string/Delete_Pictogram"
             app:tint="@color/primary_dark_color"
             app:layout_constraintEnd_toStartOf="@+id/btnPlayPhrase"
             app:layout_constraintTop_toTopOf="parent"
@@ -90,7 +91,7 @@
         android:textStyle="bold"
         android:gravity="center"
         android:padding="8dp"
-        android:background="@color/teal_200"
+        android:background="@color/primary_color"
         android:textColor="@color/white"
         app:layout_constraintTop_toBottomOf="@id/categoryNavigationContainer"
         app:layout_constraintStart_toStartOf="parent"

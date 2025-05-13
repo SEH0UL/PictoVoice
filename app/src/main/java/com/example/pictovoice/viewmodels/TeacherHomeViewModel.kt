@@ -15,7 +15,6 @@ import java.util.Date
 
 /**
  * Sealed class para representar los diferentes estados de las operaciones en la UI del profesor.
- * Puede ser Idle (inactivo), Loading (cargando), Success (éxito con datos) o Error (fallo con mensaje).
  */
 sealed class TeacherHomeResult<out T> {
     object Idle : TeacherHomeResult<Nothing>()
@@ -29,35 +28,27 @@ class TeacherHomeViewModel(application: Application) : AndroidViewModel(applicat
     private val firestoreRepository = FirestoreRepository()
     private val firebaseAuth = FirebaseAuth.getInstance()
 
-    // LiveData para los datos del profesor autenticado.
     private val _teacherData = MutableLiveData<User?>()
     val teacherData: LiveData<User?> = _teacherData
 
-    // LiveData para la lista de clases del profesor.
     private val _classes = MutableLiveData<List<Classroom>>()
     val classes: LiveData<List<Classroom>> = _classes
 
-    // LiveData para el estado general de la UI (carga inicial, errores generales).
     private val _uiState = MutableLiveData<TeacherHomeResult<Any>>(TeacherHomeResult.Idle)
     val uiState: LiveData<TeacherHomeResult<Any>> = _uiState
 
-    // LiveData para el resultado de la operación de crear una nueva clase.
     private val _createClassResult = MutableLiveData<TeacherHomeResult<Unit>>()
     val createClassResult: LiveData<TeacherHomeResult<Unit>> = _createClassResult
 
-    // LiveData para el resultado de la operación de eliminar una clase.
+    // ESTAS LÍNEAS DEBEN ESTAR PRESENTES:
     private val _deleteClassResult = MutableLiveData<TeacherHomeResult<Unit>>()
     val deleteClassResult: LiveData<TeacherHomeResult<Unit>> = _deleteClassResult
 
+
     init {
-        // Cargar los datos iniciales cuando el ViewModel se crea.
         loadTeacherDataAndClasses()
     }
 
-    /**
-     * Carga los datos del profesor y sus clases desde Firestore.
-     * Actualiza _teacherData, _classes y _uiState.
-     */
     fun loadTeacherDataAndClasses() {
         _uiState.value = TeacherHomeResult.Loading
         val userId = firebaseAuth.currentUser?.uid
@@ -68,14 +59,13 @@ class TeacherHomeViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         viewModelScope.launch {
-            // Cargar datos del profesor.
             val userResult = firestoreRepository.getUser(userId)
             if (userResult.isSuccess) {
                 _teacherData.value = userResult.getOrNull()
                 if (_teacherData.value == null) {
                     Log.e("TeacherHomeVM", "loadTeacherDataAndClasses: Datos del profesor son nulos desde Firestore para UID: $userId")
                     _uiState.value = TeacherHomeResult.Error("No se pudieron obtener los datos del perfil del profesor.")
-                    return@launch // No continuar si el perfil del profesor no se carga.
+                    return@launch
                 }
             } else {
                 _uiState.value = TeacherHomeResult.Error(userResult.exceptionOrNull()?.message ?: "Error desconocido al cargar datos del profesor.")
@@ -83,11 +73,10 @@ class TeacherHomeViewModel(application: Application) : AndroidViewModel(applicat
                 return@launch
             }
 
-            // Si el profesor se cargó, cargar sus clases.
             val classesResult = firestoreRepository.getClassesByTeacher(userId)
             if (classesResult.isSuccess) {
                 _classes.value = classesResult.getOrNull() ?: emptyList()
-                _uiState.value = TeacherHomeResult.Success(_classes.value ?: emptyList<Classroom>()) // Indicar éxito general.
+                _uiState.value = TeacherHomeResult.Success(_classes.value ?: emptyList<Classroom>())
                 Log.d("TeacherHomeVM", "Datos y clases del profesor cargados. Clases encontradas: ${_classes.value?.size ?: 0}")
             } else {
                 _uiState.value = TeacherHomeResult.Error(classesResult.exceptionOrNull()?.message ?: "Error desconocido al cargar las clases.")
@@ -96,11 +85,6 @@ class TeacherHomeViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    /**
-     * Crea una nueva clase en Firestore.
-     * @param className Nombre de la nueva clase.
-     * @param studentIds Lista de IDs de los alumnos a añadir (puede estar vacía).
-     */
     fun createNewClass(className: String, studentIds: List<String>) {
         _createClassResult.value = TeacherHomeResult.Loading
         val teacherId = firebaseAuth.currentUser?.uid
@@ -117,7 +101,7 @@ class TeacherHomeViewModel(application: Application) : AndroidViewModel(applicat
             className = className.trim(),
             teacherId = teacherId,
             studentIds = studentIds,
-            createdAt = Date() // Firestore convierte Date a Timestamp.
+            createdAt = Date()
         )
 
         viewModelScope.launch {
@@ -125,19 +109,15 @@ class TeacherHomeViewModel(application: Application) : AndroidViewModel(applicat
             if (result.isSuccess) {
                 _createClassResult.value = TeacherHomeResult.Success(Unit)
                 Log.d("TeacherHomeVM", "Clase '$className' creada exitosamente.")
-                loadTeacherDataAndClasses() // Recargar datos para mostrar la nueva clase.
+                loadTeacherDataAndClasses()
             } else {
                 _createClassResult.value = TeacherHomeResult.Error(result.exceptionOrNull()?.message ?: "Error desconocido al crear la clase.")
             }
         }
     }
 
-    /**
-     * Actualiza una clase existente en Firestore.
-     * @param classroom Objeto Classroom con los datos actualizados.
-     */
     fun updateClass(classroom: Classroom) {
-        _uiState.value = TeacherHomeResult.Loading // Se podría usar un LiveData específico para 'updateClassResult'.
+        _uiState.value = TeacherHomeResult.Loading
         val teacherId = firebaseAuth.currentUser?.uid
         if (teacherId == null || classroom.teacherId != teacherId) {
             _uiState.value = TeacherHomeResult.Error("No autorizado para actualizar esta clase.")
@@ -148,32 +128,25 @@ class TeacherHomeViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-
         viewModelScope.launch {
-            val result = firestoreRepository.saveClass(classroom) // saveClass también sirve para actualizar si el ID existe.
+            val result = firestoreRepository.saveClass(classroom)
             if (result.isSuccess) {
                 Log.d("TeacherHomeVM", "Clase '${classroom.className}' actualizada exitosamente.")
-                loadTeacherDataAndClasses() // Recargar datos.
+                loadTeacherDataAndClasses()
             } else {
                 _uiState.value = TeacherHomeResult.Error(result.exceptionOrNull()?.message ?: "Error desconocido al actualizar la clase.")
             }
         }
     }
 
-    /**
-     * Elimina una clase de Firestore.
-     * @param classroom La clase a eliminar.
-     */
     fun deleteClass(classroom: Classroom) {
-        _deleteClassResult.value = TeacherHomeResult.Loading
+        _deleteClassResult.value = TeacherHomeResult.Loading // USA _deleteClassResult
         val currentTeacherId = firebaseAuth.currentUser?.uid
 
         if (currentTeacherId == null) {
             _deleteClassResult.value = TeacherHomeResult.Error("Usuario no autenticado.")
             return
         }
-        // Verificación adicional: solo el profesor dueño debería poder eliminar.
-        // Las reglas de Firestore son la principal capa de seguridad.
         if (classroom.teacherId != currentTeacherId) {
             _deleteClassResult.value = TeacherHomeResult.Error("No tienes permiso para eliminar esta clase.")
             Log.w("TeacherHomeVM", "Intento de eliminación de clase por usuario no propietario. UID: $currentTeacherId, TeacherID clase: ${classroom.teacherId}")
@@ -189,19 +162,18 @@ class TeacherHomeViewModel(application: Application) : AndroidViewModel(applicat
             if (result.isSuccess) {
                 _deleteClassResult.value = TeacherHomeResult.Success(Unit)
                 Log.d("TeacherHomeVM", "Clase '${classroom.className}' eliminada exitosamente.")
-                loadTeacherDataAndClasses() // Recargar la lista de clases.
+                loadTeacherDataAndClasses()
             } else {
                 _deleteClassResult.value = TeacherHomeResult.Error(result.exceptionOrNull()?.message ?: "Error desconocido al eliminar la clase.")
             }
         }
     }
 
-    /** Resetea el estado de _createClassResult a Idle. */
     fun resetCreateClassResult() {
         _createClassResult.value = TeacherHomeResult.Idle
     }
 
-    /** Resetea el estado de _deleteClassResult a Idle. */
+    // ESTA FUNCIÓN DEBE ESTAR PRESENTE:
     fun resetDeleteClassResult() {
         _deleteClassResult.value = TeacherHomeResult.Idle
     }

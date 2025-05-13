@@ -19,4 +19,5 @@
     <string name="Delete_class">Eliminar Clase</string>
     <string name="txtButtonAcceder">Acceder</string>
     <string name="teacher_name_not_found">Nombre de profesor no encontrado</string>
+    <string name="title_activity_class_detail">Detalles de la Clase</string>
 </resources>

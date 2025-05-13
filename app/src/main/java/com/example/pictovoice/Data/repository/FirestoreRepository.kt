@@ -135,6 +135,64 @@ class FirestoreRepository {
         }
     }
 
+    // NUEVA FUNCIÓN para obtener detalles de UNA clase específica por su ID
+    suspend fun getClassDetails(classId: String): kotlin.Result<Classroom?> = withContext(Dispatchers.IO) {
+        try {
+            if (classId.isBlank()) {
+                return@withContext kotlin.Result.failure(IllegalArgumentException("El ID de la clase no puede estar vacío."))
+            }
+            val snapshot = classesCollection.document(classId).get().await()
+            if (snapshot.exists()) {
+                kotlin.Result.success(Classroom.fromSnapshot(snapshot))
+            } else {
+                Log.w("FirestoreRepo", "Clase no encontrada con ID: $classId")
+                kotlin.Result.success(null) // Clase no encontrada
+            }
+        } catch (e: Exception) {
+            Log.e("FirestoreRepo", "Error obteniendo detalles de la clase $classId", e)
+            kotlin.Result.failure(e)
+        }
+    }
+
+    // NUEVA FUNCIÓN (o modificada) para obtener múltiples usuarios por una lista de IDs
+    suspend fun getUsersByIds(userIds: List<String>): kotlin.Result<List<User>> = withContext(Dispatchers.IO) {
+        if (userIds.isEmpty()) {
+            return@withContext kotlin.Result.success(emptyList())
+        }
+        try {
+            // Firestore limita las consultas 'in' a 30 elementos. Si hay más, se deben dividir.
+            if (userIds.size > 30) {
+                Log.w("FirestoreRepo", "La lista de userIds (${userIds.size}) para getUsersByIds excede el límite de 30. Se necesitarían múltiples consultas.")
+                // Implementar lógica de chunking (dividir en lotes de 30) si es un caso común.
+                // Por ahora, se procede, pero podría fallar si se supera el límite real del backend.
+            }
+            val querySnapshot = usersCollection.whereIn("userId", userIds).get().await()
+            val users = querySnapshot.documents.mapNotNull { User.fromSnapshot(it) }
+            kotlin.Result.success(users)
+        } catch (e: Exception) {
+            Log.e("FirestoreRepo", "Error obteniendo usuarios por IDs", e)
+            kotlin.Result.failure(e)
+        }
+    }
+
+    // NUEVA FUNCIÓN para eliminar un alumno de una clase (actualiza el array studentIds)
+    suspend fun removeStudentFromClassroom(classId: String, studentId: String): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            if (classId.isBlank() || studentId.isBlank()) {
+                return@withContext kotlin.Result.failure(IllegalArgumentException("El ID de la clase y del alumno no pueden estar vacíos."))
+            }
+            classesCollection.document(classId)
+                .update("studentIds", FieldValue.arrayRemove(studentId)) // Elimina el studentId del array
+                .await()
+            Log.d("FirestoreRepo", "Alumno $studentId eliminado de la clase $classId")
+            kotlin.Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("FirestoreRepo", "Error eliminando alumno $studentId de la clase $classId", e)
+            kotlin.Result.failure(e)
+        }
+    }
+
+    // Función existente, la dejo para referencia por si la usas en `getStudentsByTeacher`
     suspend fun addStudentToClass(classId: String, studentId: String): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
         try {
             classesCollection.document(classId)
@@ -146,6 +204,46 @@ class FirestoreRepository {
             kotlin.Result.failure(e)
         }
     }
+
+    // TODO: Crear una función para buscar alumnos que no están en la clase actual, para la funcionalidad de "Añadir Alumno".
+    // suspend fun searchAvailableStudents(nameQuery: String, excludedStudentIds: List<String>): kotlin.Result<List<User>>
+    // Esta función necesitaría buscar en la colección 'users' por nombre/username,
+    // filtrar por role=="student", y excluir los IDs que ya están en la clase.
+
+    // NUEVA FUNCIÓN para buscar alumnos por nombre (búsqueda de prefijo simple)
+    // Esta función busca usuarios con rol "student".
+    suspend fun searchStudentsByName(
+        nameQuery: String,
+        limit: Long = 20 // Limitar resultados para no traer toda la base de datos
+    ): kotlin.Result<List<User>> = withContext(Dispatchers.IO) {
+        if (nameQuery.isBlank()) {
+            return@withContext kotlin.Result.success(emptyList())
+        }
+        try {
+            // Búsqueda de prefijo: encuentra nombres que EMPIEZAN con nameQuery.
+            // Firestore es sensible a mayúsculas/minúsculas en las queries por defecto.
+            // Para hacerlo insensible, necesitarías guardar una versión en minúsculas del nombre
+            // y buscar sobre ese campo. Por ahora, será sensible.
+            val querySnapshot = usersCollection
+                .whereEqualTo("role", "student") // Solo buscar alumnos
+                .orderBy("fullName") // Necesario para usar startAt/endAt en fullName
+                .startAt(nameQuery.trim())
+                .endAt(nameQuery.trim() + '\uf8ff') // \uf8ff es un carácter unicode alto para simular "endsWith" en prefijos
+                .limit(limit)
+                .get()
+                .await()
+
+            val students = querySnapshot.documents.mapNotNull { User.fromSnapshot(it) }
+            Log.d("FirestoreRepo", "Búsqueda de alumnos por '$nameQuery' encontró ${students.size} resultados.")
+            kotlin.Result.success(students)
+        } catch (e: Exception) {
+            Log.e("FirestoreRepo", "Error buscando alumnos por nombre '$nameQuery'", e)
+            // Si el error es por falta de índice, Logcat lo indicará con un enlace.
+            // Probablemente necesites un índice en 'users' sobre: role (ASC), fullName (ASC).
+            kotlin.Result.failure(e)
+        }
+    }
+
 
     // ---------- Operaciones con Pictogramas ----------
     // (Asumiendo que estas funciones son para pictogramas almacenados en Firestore, no los locales)

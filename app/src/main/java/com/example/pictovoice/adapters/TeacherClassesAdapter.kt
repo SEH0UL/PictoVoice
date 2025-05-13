@@ -11,7 +11,7 @@ import com.example.pictovoice.databinding.ItemTeacherClassBinding
 class TeacherClassesAdapter(
     private val onAccessClick: (Classroom) -> Unit,
     private val onEditClick: (Classroom) -> Unit,
-    private val onDeleteClick: (Classroom) -> Unit // NUEVO: Callback para eliminar
+    private val onDeleteClick: (Classroom) -> Unit // Callback para el clic en eliminar
 ) : ListAdapter<Classroom, TeacherClassesAdapter.ViewHolder>(ClassroomDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -25,17 +25,19 @@ class TeacherClassesAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val classroom = getItem(position)
-        holder.bind(classroom, onAccessClick, onEditClick, onDeleteClick) // Pasar el nuevo callback
+        // Pasar todos los callbacks al ViewHolder
+        holder.bind(classroom, onAccessClick, onEditClick, onDeleteClick)
     }
 
     inner class ViewHolder(private val binding: ItemTeacherClassBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
+        // El ViewHolder ahora también recibe onDeleteClick
         fun bind(
             classroom: Classroom,
             onAccessClick: (Classroom) -> Unit,
             onEditClick: (Classroom) -> Unit,
-            onDeleteClick: (Classroom) -> Unit // NUEVO: Parámetro para el callback
+            onDeleteClick: (Classroom) -> Unit
         ) {
             binding.tvClassName.text = classroom.className
 
@@ -47,8 +49,8 @@ class TeacherClassesAdapter(
                 onEditClick(classroom)
             }
 
-            // NUEVO: Listener para el botón de eliminar
-            binding.btnDeleteClass.setOnClickListener {
+            // Configurar el listener para el botón de eliminar
+            binding.btnDeleteClass.setOnClickListener { // Asumiendo que tienes btnDeleteClass en item_teacher_class.xml
                 onDeleteClick(classroom)
             }
         }

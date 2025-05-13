@@ -25,6 +25,16 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.classroom.ClassDetailActivity"
+            android:exported="false"
+            android:label="@string/title_activity_class_detail"
+            android:parentActivityName=".ui.teacher.TeacherHomeActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.teacher.TeacherHomeActivity" />
+        </activity>
+
+        <activity
             android:name=".ui.auth.MainActivity"
             android:exported="true">
             <intent-filter>

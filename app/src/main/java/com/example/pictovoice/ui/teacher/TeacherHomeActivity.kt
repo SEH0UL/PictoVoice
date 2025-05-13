@@ -11,16 +11,15 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.pictovoice.Data.Model.Classroom
+import com.example.pictovoice.Data.Model.Classroom // Asegúrate de importar Classroom
 import com.example.pictovoice.R
 import com.example.pictovoice.adapters.TeacherClassesAdapter
 import com.example.pictovoice.databinding.ActivityTeacherHomeBinding
 import com.example.pictovoice.ui.auth.MainActivity
+import com.example.pictovoice.ui.classroom.ClassDetailActivity // Import para la navegación
 import com.example.pictovoice.utils.TeacherHomeViewModelFactory
 import com.example.pictovoice.viewmodels.TeacherHomeResult
 import com.example.pictovoice.viewmodels.TeacherHomeViewModel
-// Descomentar si se usa Glide para imágenes de perfil:
-// import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 
 class TeacherHomeActivity : AppCompatActivity() {
@@ -37,18 +36,15 @@ class TeacherHomeActivity : AppCompatActivity() {
         binding = ActivityTeacherHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Redirigir a login si el usuario no está autenticado.
         if (firebaseAuth.currentUser == null) {
             Log.w("TeacherHomeActivity", "Profesor no autenticado, redirigiendo a login.")
             navigateToLogin()
-            return // Importante para no continuar con el resto del onCreate.
+            return
         }
 
         setupRecyclerView()
         setupObservers()
         setupClickListeners()
-
-        // La carga inicial de datos se realiza en el 'init' del ViewModel.
     }
 
     private fun navigateToLogin() {
@@ -60,20 +56,20 @@ class TeacherHomeActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         classesAdapter = TeacherClassesAdapter(
-            onAccessClick = { classroom ->
-                // TODO: Implementar navegación a la pantalla "Vista de Clase".
-                Toast.makeText(this, "Accediendo a: ${classroom.className}", Toast.LENGTH_SHORT).show()
-                Log.d("TeacherHomeActivity", "Acceder a clase ID: ${classroom.classId}")
-                // val intent = Intent(this, ClassDetailActivity::class.java)
-                // intent.putExtra("CLASS_ID", classroom.classId)
-                // startActivity(intent)
+            onAccessClick = { classroom -> // classroom es de tipo Classroom aquí
+                Log.d("TeacherHomeActivity", "Acceder a clase ID: ${classroom.classId}, Nombre: ${classroom.className}")
+                val intent = Intent(this, ClassDetailActivity::class.java).apply {
+                    putExtra(ClassDetailActivity.EXTRA_CLASS_ID, classroom.classId)
+                    putExtra(ClassDetailActivity.EXTRA_CLASS_NAME, classroom.className)
+                }
+                startActivity(intent)
             },
-            onEditClick = { classroom ->
-                // TODO: Implementar pantalla/diálogo de edición más completo si es necesario.
+            onEditClick = { classroom -> // classroom es de tipo Classroom
+                Toast.makeText(this, "Editar: ${classroom.className}", Toast.LENGTH_SHORT).show()
                 showEditClassDialog(classroom)
             },
-            onDeleteClick = { classroom ->
-                showDeleteConfirmationDialog(classroom)
+            onDeleteClick = { classroom -> // classroom es de tipo Classroom
+                showDeleteConfirmationDialog(classroom) // Llamada al método que debe existir
             }
         )
         binding.rvTeacherClasses.apply {
@@ -86,20 +82,10 @@ class TeacherHomeActivity : AppCompatActivity() {
         viewModel.teacherData.observe(this) { teacher ->
             teacher?.let {
                 binding.tvTeacherName.text = it.fullName
-                // Ejemplo para cargar imagen de perfil con Glide:
-                // if (it.profileImageUrl.isNotBlank()) {
-                //    Glide.with(this).load(it.profileImageUrl)
-                //        .placeholder(R.drawable.ic_default_profile) // Un placeholder mientras carga
-                //        .error(R.drawable.ic_default_profile) // Un drawable de error si falla
-                //        .circleCrop() // Para hacerla redonda
-                //        .into(binding.ivTeacherProfileImage)
-                // } else {
-                //    binding.ivTeacherProfileImage.setImageResource(R.drawable.ic_default_profile)
-                // }
-                Log.d("TeacherHomeActivity", "Datos del profesor cargados en UI: ${it.fullName}")
+                Log.d("TeacherHomeActivity", "Datos del profesor actualizados en UI: ${it.fullName}")
             } ?: run {
-                binding.tvTeacherName.text = getString(R.string.teacher_name_not_found) // Usar recurso string
-                Log.w("TeacherHomeActivity", "Datos del profesor (User) son nulos.")
+                binding.tvTeacherName.text = getString(R.string.teacher_name_not_found)
+                Log.w("TeacherHomeActivity", "Datos del profesor son nulos.")
             }
         }
 
@@ -108,44 +94,30 @@ class TeacherHomeActivity : AppCompatActivity() {
             classesAdapter.submitList(classrooms)
             if (classrooms.isNullOrEmpty()) {
                 binding.rvTeacherClasses.visibility = View.GONE
-                // Aquí podrías mostrar un mensaje como "No tienes clases creadas."
-                // binding.tvNoClassesMessage.visibility = View.VISIBLE
+                // Podrías mostrar un TextView indicando que no hay clases aquí
             } else {
                 binding.rvTeacherClasses.visibility = View.VISIBLE
-                // binding.tvNoClassesMessage.visibility = View.GONE
             }
         }
 
-        // Observador para el estado general de la UI (carga inicial, errores generales)
         viewModel.uiState.observe(this) { result ->
             when (result) {
-                is TeacherHomeResult.Loading -> {
-                    binding.progressBarTeacherHome.visibility = View.VISIBLE
-                }
-                is TeacherHomeResult.Success -> {
-                    binding.progressBarTeacherHome.visibility = View.GONE
-                    // Los datos específicos (teacherData, classes) se actualizan por sus propios observers.
-                }
+                is TeacherHomeResult.Loading -> binding.progressBarTeacherHome.visibility = View.VISIBLE
+                is TeacherHomeResult.Success -> binding.progressBarTeacherHome.visibility = View.GONE
                 is TeacherHomeResult.Error -> {
                     binding.progressBarTeacherHome.visibility = View.GONE
                     Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
-                    Log.e("TeacherHomeActivity", "Error UI general: ${result.message}")
                 }
-                is TeacherHomeResult.Idle -> {
-                    binding.progressBarTeacherHome.visibility = View.GONE
-                }
+                is TeacherHomeResult.Idle -> binding.progressBarTeacherHome.visibility = View.GONE
             }
         }
 
-        // Observador para el resultado de la creación de clases
         viewModel.createClassResult.observe(this) { result ->
             when (result) {
-                is TeacherHomeResult.Loading -> {
-                    binding.progressBarTeacherHome.visibility = View.VISIBLE
-                }
+                is TeacherHomeResult.Loading -> binding.progressBarTeacherHome.visibility = View.VISIBLE
                 is TeacherHomeResult.Success -> {
                     binding.progressBarTeacherHome.visibility = View.GONE
-                    Toast.makeText(this, "Clase creada exitosamente.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Clase creada exitosamente", Toast.LENGTH_SHORT).show()
                     viewModel.resetCreateClassResult()
                 }
                 is TeacherHomeResult.Error -> {
@@ -153,19 +125,16 @@ class TeacherHomeActivity : AppCompatActivity() {
                     Toast.makeText(this, "Error al crear clase: ${result.message}", Toast.LENGTH_LONG).show()
                     viewModel.resetCreateClassResult()
                 }
-                is TeacherHomeResult.Idle -> { /* No action needed */ }
+                is TeacherHomeResult.Idle -> binding.progressBarTeacherHome.visibility = View.GONE
             }
         }
 
-        // Observador para el resultado de la eliminación de clases
         viewModel.deleteClassResult.observe(this) { result ->
             when (result) {
-                is TeacherHomeResult.Loading -> {
-                    binding.progressBarTeacherHome.visibility = View.VISIBLE
-                }
+                is TeacherHomeResult.Loading -> binding.progressBarTeacherHome.visibility = View.VISIBLE
                 is TeacherHomeResult.Success -> {
                     binding.progressBarTeacherHome.visibility = View.GONE
-                    Toast.makeText(this, "Clase eliminada exitosamente.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Clase eliminada exitosamente", Toast.LENGTH_SHORT).show()
                     viewModel.resetDeleteClassResult()
                 }
                 is TeacherHomeResult.Error -> {
@@ -173,7 +142,7 @@ class TeacherHomeActivity : AppCompatActivity() {
                     Toast.makeText(this, "Error al eliminar clase: ${result.message}", Toast.LENGTH_LONG).show()
                     viewModel.resetDeleteClassResult()
                 }
-                is TeacherHomeResult.Idle -> { /* No action needed */ }
+                is TeacherHomeResult.Idle -> binding.progressBarTeacherHome.visibility = View.GONE
             }
         }
     }
@@ -182,24 +151,20 @@ class TeacherHomeActivity : AppCompatActivity() {
         binding.btnCreateNewClass.setOnClickListener {
             showCreateClassDialog()
         }
-        // TODO: Añadir listener para un botón de logout si es necesario
     }
 
     private fun showCreateClassDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_class, null)
         val etClassName = dialogView.findViewById<EditText>(R.id.etDialogClassName)
-
         AlertDialog.Builder(this)
             .setTitle("Crear Nueva Clase")
             .setView(dialogView)
             .setPositiveButton("Crear") { _, _ ->
                 val className = etClassName.text.toString().trim()
                 if (className.isNotEmpty()) {
-                    // TODO: Implementar selección de alumnos y pasar sus IDs.
-                    val studentIds = emptyList<String>() // Por ahora, lista vacía.
-                    viewModel.createNewClass(className, studentIds)
+                    viewModel.createNewClass(className, emptyList()) // Lista de alumnos vacía por ahora
                 } else {
-                    Toast.makeText(this, "El nombre de la clase no puede estar vacío.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "El nombre de la clase no puede estar vacío", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancelar", null)
@@ -207,48 +172,39 @@ class TeacherHomeActivity : AppCompatActivity() {
     }
 
     private fun showEditClassDialog(classroom: Classroom) {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_class, null) // Reutilizar layout
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_class, null)
         val etClassName = dialogView.findViewById<EditText>(R.id.etDialogClassName)
         etClassName.setText(classroom.className)
-
-        // TODO: Añadir funcionalidad para editar la lista de alumnos de la clase.
-
         AlertDialog.Builder(this)
             .setTitle("Editar Clase")
             .setView(dialogView)
             .setPositiveButton("Guardar") { _, _ ->
                 val newClassName = etClassName.text.toString().trim()
                 if (newClassName.isNotEmpty()) {
-                    if (newClassName != classroom.className /* || alumnosCambiaron */) {
-                        val updatedClassroom = classroom.copy(className = newClassName) // Actualizar solo nombre por ahora
+                    if (newClassName != classroom.className) {
+                        val updatedClassroom = classroom.copy(className = newClassName)
                         viewModel.updateClass(updatedClassroom)
                     } else {
-                        Toast.makeText(this, "No se realizaron cambios.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "No se detectaron cambios.", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Toast.makeText(this, "El nombre de la clase no puede estar vacío.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "El nombre de la clase no puede estar vacío", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
+    // MÉTODO NECESARIO PARA ELIMINAR CLASE
     private fun showDeleteConfirmationDialog(classroom: Classroom) {
         AlertDialog.Builder(this)
-            .setTitle("Confirmar Eliminación")
+            .setTitle("Eliminar Clase")
             .setMessage("¿Estás seguro de que quieres eliminar la clase \"${classroom.className}\"? Esta acción no se puede deshacer.")
-            .setIcon(android.R.drawable.ic_dialog_alert) // Icono de advertencia estándar
-            .setPositiveButton("Sí, Eliminar") { _, _ ->
-                viewModel.deleteClass(classroom)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .setPositiveButton("Sí, eliminar") { _, _ ->
+                viewModel.deleteClass(classroom) // Llama al método del ViewModel
             }
             .setNegativeButton("Cancelar", null)
             .show()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Considera si necesitas recargar los datos aquí, aunque el ViewModel debería manejar
-        // las actualizaciones después de crear/editar/eliminar clases.
-        // viewModel.loadTeacherDataAndClasses()
     }
 }

@@ -20,4 +20,6 @@
     <string name="txtButtonAcceder">Acceder</string>
     <string name="teacher_name_not_found">Nombre de profesor no encontrado</string>
     <string name="title_activity_class_detail">Detalles de la Clase</string>
+    <string name="solicitar_palabras_placeholder">Solicitar Palabras (Nivel %1$d)</string>
+    <string name="desbloquear_palabras_placeholder">Desbloquear Palabras (Nivel %1$d)</string>
 </resources>

@@ -80,6 +80,16 @@ class FirestoreRepository {
         }
     }
 
+    // NUEVO MÉTODO para actualizar la solicitud de palabras
+    suspend fun updateUserWordRequestStatus(userId: String, hasRequested: Boolean): kotlin.Result<Unit> = try {
+        usersCollection.document(userId)
+            .update("hasPendingWordRequest", hasRequested)
+            .await()
+        kotlin.Result.success(Unit)
+    } catch (e: Exception) {
+        Log.e("FirestoreRepo", "Error updating word request status for user $userId", e)
+        kotlin.Result.failure(e)
+    }
 
     // ---------- Operaciones con Clases ----------
 

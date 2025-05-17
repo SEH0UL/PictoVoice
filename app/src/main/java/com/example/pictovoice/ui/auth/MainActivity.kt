@@ -16,6 +16,7 @@ import com.example.pictovoice.ui.teacher.TeacherHomeActivity // Para rol profeso
 import com.example.pictovoice.utils.AuthResult
 import com.example.pictovoice.utils.AuthViewModel
 import com.example.pictovoice.utils.AuthViewModelFactory
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 // import java.util.Locale // Si lo usas para normalizar el input
 
@@ -34,60 +35,89 @@ class MainActivity : AppCompatActivity() {
 
         // Comprobar si el usuario ya está logueado
         if (authRepository.isUserLoggedIn()) {
-            // Si está logueado, necesitamos saber su rol para redirigir correctamente.
-            // Esto requeriría cargar el User de Firestore aquí o que el ViewModel lo gestione al inicio.
-            // Por simplicidad, si está logueado, por ahora solo lo mandamos a una pantalla genérica
-            // o intentamos una carga rápida.
-            // Lo ideal sería que el ViewModel tuviera un "checkCurrentUserSession"
-            // que emita un User o nada.
-            // --- INICIO BLOQUE DE AUTO-LOGIN MEJORADO (REQUIERE MÁS LÓGICA EN VM) ---
-            /*
-            viewModel.checkActiveSession() // Un nuevo método en AuthViewModel
+            Log.d("MainActivity", "Usuario previamente logueado. Intentando restaurar sesión...")
+            // authRepository.logout() // ¡COMENTA O ELIMINA ESTA LÍNEA!
+
+            // Ahora, en lugar de desloguear, vamos a cargar los datos del usuario
+            // y redirigir a la pantalla correspondiente.
+            // Puedes usar una corrutina para esto.
             lifecycleScope.launch {
-                viewModel.activeUser.collect { user -> // Un nuevo StateFlow en AuthViewModel
-                    if (user != null) {
-                        if (user.role == "teacher") {
-                            navigateToTeacherHome()
+                val uid = FirebaseAuth.getInstance().currentUser?.uid
+                if (uid != null) {
+                    // Aquí deberías tener una forma de obtener el objeto User completo
+                    // ya sea a través de AuthRepository o FirestoreRepository.
+                    // AuthRepository tiene un método login que devuelve User, pero para
+                    // un usuario ya logueado, necesitamos obtener sus datos de Firestore.
+                    // Usaremos FirestoreRepository directamente o un método específico en AuthRepository.
+
+                    // Opción A: Usar FirestoreRepository (si tienes una instancia disponible o la creas)
+                    // val firestoreRepo = FirestoreRepository()
+                    // val userResult = firestoreRepo.getUser(uid)
+
+                    // Opción B: Añadir un método a AuthRepository para obtener el User actual si ya está logueado
+                    // (Esta sería una mejor práctica para encapsular la lógica)
+                    // Por ahora, para hacerlo rápido, asumiremos que puedes obtener el User.
+                    // Necesitarás un método como `getCurrentUserProfile(uid: String)` en AuthRepository
+                    // o usar directamente FirestoreRepository.
+
+                    // --- INICIO: Lógica para cargar el usuario y redirigir ---
+                    // Vamos a usar el AuthRepository que ya tienes instanciado,
+                    // asumiendo que podría tener (o le añadimos) un método para esto.
+                    // Por simplicidad, y dado que getUser está en FirestoreRepository,
+                    // y AuthRepository ya tiene una instancia de Firestore,
+                    // podríamos llamar a getUser directamente si expones esa funcionalidad o
+                    // AuthRepository lo usa internamente.
+
+                    // La forma más directa con tu estructura actual es usar FirestoreRepository
+                    // pero MainActivity ya tiene una instancia de AuthRepository.
+                    // Vamos a simular que AuthRepository puede obtener el User.
+                    // Lo ideal sería que AuthViewModel manejara esto.
+
+                    // --- Bloque de código para restaurar sesión ---
+                    // (Este es similar al "BLOQUE DE AUTO-LOGIN SIMPLE" que tenías comentado)
+                    val userDocResult = com.example.pictovoice.Data.repository.FirestoreRepository().getUser(uid) // Creando instancia temporalmente
+                    // Lo ideal es inyectar o que AuthRepo lo haga
+
+                    if (userDocResult.isSuccess) {
+                        val user = userDocResult.getOrNull()
+                        if (user != null) {
+                            Toast.makeText(this@MainActivity, "Sesión restaurada para ${user.fullName}", Toast.LENGTH_SHORT).show()
+                            if (user.role == "teacher") {
+                                navigateToTeacherHome()
+                            } else {
+                                navigateToStudentHome()
+                            }
+                            finish() // Cierra MainActivity para que el usuario no vuelva aquí con "Atrás"
+                            return@launch // Salimos de la corrutina y de onCreate
                         } else {
-                            navigateToStudentHome()
+                            // Usuario en Auth pero no en Firestore, o error de conversión
+                            Log.e("MainActivity", "Error al obtener datos del usuario desde Firestore.")
+                            // Considera desloguear para evitar un estado inconsistente
+                            authRepository.logout()
                         }
                     } else {
-                        // No hay sesión activa o error al cargar, quedarse en login
-                        setupListeners() // Asegurar que los listeners se configuran si no hay auto-login
-                        setupObservers()
+                        // Error al obtener el documento del usuario
+                        Log.e("MainActivity", "Fallo al cargar el perfil del usuario: ${userDocResult.exceptionOrNull()?.message}")
+                        // Considera desloguear para evitar un estado inconsistente
+                        authRepository.logout()
                     }
+                    // --- FIN: Lógica para cargar el usuario y redirigir ---
+                } else {
+                    // No hay UID aunque isUserLoggedIn sea true (raro, pero posible si el user de Firebase es null)
+                    Log.w("MainActivity", "isUserLoggedIn es true pero currentUser es null.")
+                    authRepository.logout() // Limpiar estado
                 }
             }
-            */
-            // --- FIN BLOQUE DE AUTO-LOGIN MEJORADO ---
+            // Si la corrutina no hizo return (porque falló la carga del usuario),
+            // la ejecución continuará y se mostrará la pantalla de login.
+            // Si la corrutina tuvo éxito y redirigió, esta parte no se alcanzará
+            // debido al return@launch. Sin embargo, para mayor claridad,
+            // el setup de listeners/observers debería estar en un 'else' del if(isUserLoggedIn).
 
-            // --- INICIO BLOQUE DE AUTO-LOGIN SIMPLE (SOLO SI isUserLoggedIn) ---
-            // Este bloque es más simple pero no conoce el rol sin una consulta adicional.
-            // Si el usuario cierra y abre la app, lo ideal es llevarlo a su home respectiva.
-            // Para ello, el ViewModel debería tener una forma de cargar el usuario actual al iniciar.
-            // Por ahora, para evitar que el código se bloquee aquí, lo comentaremos
-            // y dejaremos que el usuario haga login manualmente.
-            // El flujo de "recordar sesión" se puede refinar después.
-            Log.d("MainActivity", "Usuario previamente logueado. Deslogueando para testeo manual.")
-            authRepository.logout() // FORZAR LOGOUT PARA TESTEAR EL FLUJO DE LOGIN COMPLETO
-            // Si decides mantener el auto-login, necesitarás cargar el User aquí.
-            // Ejemplo:
-            // lifecycleScope.launch {
-            //     val uid = FirebaseAuth.getInstance().currentUser?.uid
-            //     if (uid != null) {
-            //         val userResult = AuthRepository().getUser(uid) // Usar instancia o inyectar
-            //         if (userResult.isSuccess) {
-            //             val user = userResult.getOrNull()
-            //             if (user?.role == "teacher") navigateToTeacherHome() else navigateToStudentHome()
-            //             return@launch
-            //         }
-            //     }
-            //      // Si falla la carga o no hay uid, configurar listeners y observers
-            //     setupListeners()
-            //     setupObservers()
-            // }
-            // return // Evita ejecutar el resto del onCreate si ya está logueado y redirigido
-            // --- FIN BLOQUE DE AUTO-LOGIN SIMPLE ---
+            // Para asegurar que setupListeners y setupObservers solo se llaman si no se redirige:
+            // (El return@launch dentro del if(uid != null) y if(userDocResult.isSuccess) ya se encarga de esto)
+            // Si la carga del usuario falla y la corrutina termina, se ejecutarán los setups de abajo.
+
         }
 
         // Estas líneas se ejecutarán siempre si el bloque de auto-login no redirige.

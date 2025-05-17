@@ -1,6 +1,6 @@
 package com.example.pictovoice.ui.home // Asegúrate que el package es correcto
 
-import android.content.Intent
+import android.content.Intent // Asegúrate de tener este import
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,10 +12,12 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.pictovoice.Data.Model.Category // Importa tu modelo de Category
 import com.example.pictovoice.adapters.CategoryAdapter
+import com.example.pictovoice.adapters.FixedPictogramAdapter // Importaste FixedPictogramAdapter
 import com.example.pictovoice.adapters.PhrasePictogramAdapter
 import com.example.pictovoice.adapters.SelectionPictogramAdapter
 import com.example.pictovoice.databinding.ActivityHomeBinding
 import com.example.pictovoice.ui.auth.MainActivity
+import com.example.pictovoice.ui.userprofile.UserProfileActivity // IMPORTA UserProfileActivity
 import com.example.pictovoice.viewmodels.StudentHomeViewModel
 import com.google.firebase.auth.FirebaseAuth
 
@@ -25,11 +27,10 @@ class HomeActivity : AppCompatActivity() {
     private val viewModel: StudentHomeViewModel by viewModels()
 
     private lateinit var phraseAdapter: PhrasePictogramAdapter
-    private lateinit var pronounsAdapter: SelectionPictogramAdapter
-    private lateinit var fixedVerbsAdapter: SelectionPictogramAdapter
+    private lateinit var pronounsAdapter: FixedPictogramAdapter
+    private lateinit var fixedVerbsAdapter: FixedPictogramAdapter
     private lateinit var dynamicPictogramsAdapter: SelectionPictogramAdapter
     private lateinit var categoryAdapter: CategoryAdapter
-
     private val firebaseAuth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,11 +47,9 @@ class HomeActivity : AppCompatActivity() {
         }
 
         setupRecyclerViews()
-        setupClickListeners()
+        setupClickListeners() // El listener del nuevo botón se añadirá aquí
         observeViewModel()
 
-        // Los datos locales de pictogramas y categorías se cargan en el init del ViewModel.
-        // Cargar datos del usuario actual (como nivel) desde Firestore.
         firebaseAuth.currentUser?.uid?.let { userId ->
             Log.d("HomeActivity", "Loading user data for UID: $userId")
             viewModel.loadCurrentUserData(userId)
@@ -65,7 +64,7 @@ class HomeActivity : AppCompatActivity() {
         binding.rvPhrasePictograms.adapter = phraseAdapter
 
         // Adaptador para pronombres
-        pronounsAdapter = SelectionPictogramAdapter { pictogram ->
+        pronounsAdapter = FixedPictogramAdapter { pictogram ->
             Log.d("HomeActivity", "Pronoun clicked: ${pictogram.name}")
             viewModel.addPictogramToPhrase(pictogram)
         }
@@ -73,7 +72,7 @@ class HomeActivity : AppCompatActivity() {
         binding.rvPronouns.adapter = pronounsAdapter
 
         // Adaptador para verbos fijos
-        fixedVerbsAdapter = SelectionPictogramAdapter { pictogram ->
+        fixedVerbsAdapter = FixedPictogramAdapter { pictogram ->
             Log.d("HomeActivity", "Fixed verb clicked: ${pictogram.name}")
             viewModel.addPictogramToPhrase(pictogram)
         }
@@ -85,11 +84,12 @@ class HomeActivity : AppCompatActivity() {
             Log.d("HomeActivity", "Dynamic pictogram clicked: ${pictogram.name}")
             viewModel.addPictogramToPhrase(pictogram)
         }
-        // Asegúrate que el spanCount en tu XML (activity_home.xml para rvDynamicPictograms)
-        // coincide o ajusta este valor.
-        val defaultSpanCount = 6 // O el valor de tu XML
-        binding.rvDynamicPictograms.layoutManager = GridLayoutManager(this, defaultSpanCount)
+        // Asegúrate que el LayoutManager para rvDynamicPictograms se define correctamente
+        // (preferiblemente en XML con spanCount="4", o aquí si es necesario)
+        // Ejemplo si se configura aquí:
+        // binding.rvDynamicPictograms.layoutManager = GridLayoutManager(this, 4)
         binding.rvDynamicPictograms.adapter = dynamicPictogramsAdapter
+
 
         // Adaptador para categorías
         categoryAdapter = CategoryAdapter { category ->
@@ -125,13 +125,34 @@ class HomeActivity : AppCompatActivity() {
                 .show()
             true // Indica que el long click ha sido consumido
         }
+
+        // ***** INICIO: CÓDIGO AÑADIDO PARA NAVEGACIÓN AL PERFIL *****
+        binding.btnUserProfile.setOnClickListener {
+            val userId = firebaseAuth.currentUser?.uid
+            if (userId != null) {
+                val intent = Intent(this, UserProfileActivity::class.java).apply {
+                    putExtra("USER_ID_EXTRA", userId)
+                    // Opcional: Pasar el rol del visualizador.
+                    // Como es el alumno viendo su propio perfil, UserProfileActivity
+                    // ya tiene lógica para manejar esto si compara el targetUserId con el viewerUserId.
+                    // putExtra("VIEWER_ROLE_EXTRA", "student")
+                }
+                startActivity(intent)
+                Log.d("HomeActivity", "Navigating to UserProfileActivity for UID: $userId")
+            } else {
+                Toast.makeText(this, "Error: No se pudo obtener el ID del usuario.", Toast.LENGTH_SHORT).show()
+                Log.e("HomeActivity", "btnUserProfile clicked but currentUser or UID is null.")
+                // Considera desloguear o manejar este caso de error si ocurre frecuentemente.
+            }
+        }
+        // ***** FIN: CÓDIGO AÑADIDO PARA NAVEGACIÓN AL PERFIL *****
     }
 
     private fun observeViewModel() {
         Log.d("HomeActivity", "Observing ViewModel LiveData")
         viewModel.phrasePictograms.observe(this) { pictograms ->
             Log.d("HomeActivity", "Phrase pictograms updated: ${pictograms?.size ?: 0} items")
-            phraseAdapter.submitList(pictograms?.toList()) // Enviar una copia de la lista para DiffUtil
+            phraseAdapter.submitList(pictograms?.toList())
             if (pictograms?.isNotEmpty() == true) {
                 binding.rvPhrasePictograms.smoothScrollToPosition(pictograms.size - 1)
             }
@@ -169,10 +190,7 @@ class HomeActivity : AppCompatActivity() {
 
         viewModel.isLoading.observe(this) { isLoading ->
             Log.d("HomeActivity", "isLoading state changed: $isLoading")
-            // Aquí manejarías un ProgressBar general para la pantalla si lo tuvieras
-            // binding.overallProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             if(isLoading) {
-                // Podrías mostrar un Toast o un indicador de carga más sutil
                 // Toast.makeText(this, "Cargando...", Toast.LENGTH_SHORT).show()
             }
         }
@@ -181,16 +199,12 @@ class HomeActivity : AppCompatActivity() {
             errorMessage?.let {
                 Log.e("HomeActivity", "Error message received: $it")
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
-                // Limpiar el mensaje para que no se muestre repetidamente en rotaciones, etc.
-                // viewModel.clearErrorMessage() // Necesitarías este método en el VM
             }
         }
 
         viewModel.currentUser.observe(this) { user ->
             user?.let {
                 Log.d("HomeActivity", "Current user data updated: ${it.fullName}, Level: ${it.currentLevel}")
-                // Por ejemplo, actualizar el título de la activity o un TextView de bienvenida
-                // supportActionBar?.title = "PictoVoice - ${it.fullName}"
             }
         }
     }
@@ -205,6 +219,5 @@ class HomeActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d("HomeActivity", "onDestroy called")
-        // El ViewModel se encarga de liberar el MediaPlayer en su onCleared()
     }
 }

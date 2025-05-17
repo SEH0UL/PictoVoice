@@ -183,16 +183,56 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
         // --- AQUÍ AÑADIRÍAS EL RESTO DE TUS PICTOGRAMAS PARA OTRAS CATEGORÍAS ---
         // Ejemplo para la categoría inicial dinámica (comida)
         // private const val INITIAL_DYNAMIC_CATEGORY_ID = "local_comida"
-//        pictos.add(Pictogram(pictogramId = "local_com_001", name = "Manzana", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_manzana, audioResourceId = R.raw.audio_manzana, levelRequired = 1))
-//        pictos.add(Pictogram(pictogramId = "local_com_002", name = "Agua", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_agua, audioResourceId = R.raw.audio_agua, levelRequired = 1))
-//        pictos.add(Pictogram(pictogramId = "local_com_003", name = "Galleta", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_galleta, audioResourceId = R.raw.audio_galleta, levelRequired = 1))
-//        pictos.add(Pictogram(pictogramId = "local_com_004", name = "Leche", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_leche, audioResourceId = R.raw.audio_leche, levelRequired = 2))
+        // --- COMIDA ---
+        pictos.add(Pictogram(pictogramId = "local_com_001", name = "Desayuno", category = "local_comida", imageResourceId = R.drawable.picto_desayuno, audioResourceId = R.raw.audio_desayuno, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_002", name = "Almuerzo", category = "local_comida", imageResourceId = R.drawable.picto_almuerzo, audioResourceId = R.raw.audio_almuerzo, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_003", name = "Comida", category = "local_comida", imageResourceId = R.drawable.picto_comida, audioResourceId = R.raw.audio_comida, levelRequired = 1)) // Referido a la comida principal del día
+        pictos.add(Pictogram(pictogramId = "local_com_004", name = "Merienda", category = "local_comida", imageResourceId = R.drawable.picto_merienda, audioResourceId = R.raw.audio_merienda, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_005", name = "Cena", category = "local_comida", imageResourceId = R.drawable.picto_cena, audioResourceId = R.raw.audio_cena, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_006", name = "Agua", category = "local_comida", imageResourceId = R.drawable.picto_agua, audioResourceId = R.raw.audio_agua, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_007", name = "Verdura", category = "local_comida", imageResourceId = R.drawable.picto_verdura, audioResourceId = R.raw.audio_verduras, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_008", name = "Pasta", category = "local_comida", imageResourceId = R.drawable.picto_pasta, audioResourceId = R.raw.audio_pasta, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_009", name = "Hortalizas", category = "local_comida", imageResourceId = R.drawable.picto_hortalizas, audioResourceId = R.raw.audio_hortalizas, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_010", name = "Lácteos", category = "local_comida", imageResourceId = R.drawable.picto_lacteos, audioResourceId = R.raw.audio_lacteos, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_011", name = "Frutas", category = "local_comida", imageResourceId = R.drawable.picto_frutas, audioResourceId = R.raw.audio_frutas, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_012", name = "Dulces", category = "local_comida", imageResourceId = R.drawable.picto_dulces, audioResourceId = R.raw.audio_dulces, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_013", name = "Carne", category = "local_comida", imageResourceId = R.drawable.picto_carne, audioResourceId = R.raw.audio_carne, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_014", name = "Sopa", category = "local_comida", imageResourceId = R.drawable.picto_sopa, audioResourceId = R.raw.audio_sopa, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_015", name = "Pizza", category = "local_comida", imageResourceId = R.drawable.picto_pizza, audioResourceId = R.raw.audio_pizza, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_016", name = "Pescado", category = "local_comida", imageResourceId = R.drawable.picto_pescado, audioResourceId = R.raw.audio_pescado, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_017", name = "Paella", category = "local_comida", imageResourceId = R.drawable.picto_paella, audioResourceId = R.raw.audio_paella, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_018", name = "Miel", category = "local_comida", imageResourceId = R.drawable.picto_miel, audioResourceId = R.raw.audio_miel, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_019", name = "Macarrones", category = "local_comida", imageResourceId = R.drawable.picto_macarrones, audioResourceId = R.raw.audio_macarrones, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_020", name = "Lentejas", category = "local_comida", imageResourceId = R.drawable.picto_lentejas, audioResourceId = R.raw.audio_lentejas, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_021", name = "Jamón", category = "local_comida", imageResourceId = R.drawable.picto_jamon, audioResourceId = R.raw.audio_jamon, levelRequired = 1)) // Recurso: picto_jamon
+        pictos.add(Pictogram(pictogramId = "local_com_022", name = "Hamburguesa", category = "local_comida", imageResourceId = R.drawable.picto_hamburguesa, audioResourceId = R.raw.audio_hamburguesa, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_023", name = "Guisantes", category = "local_comida", imageResourceId = R.drawable.picto_guisantes, audioResourceId = R.raw.audio_guisantes, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_024", name = "Espaguetis", category = "local_comida", imageResourceId = R.drawable.picto_espaguetis, audioResourceId = R.raw.audio_espaguetis, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_025", name = "Canelones", category = "local_comida", imageResourceId = R.drawable.picto_canelones, audioResourceId = R.raw.audio_canelones, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_026", name = "Arroz con tomate", category = "local_comida", imageResourceId = R.drawable.picto_arroz_con_tomate, audioResourceId = R.raw.audio_arroz_con_tomate, levelRequired = 1)) // Recurso: picto_arroz_con_tomate
+        pictos.add(Pictogram(pictogramId = "local_com_027", name = "Ensalada", category = "local_comida", imageResourceId = R.drawable.picto_ensalada, audioResourceId = R.raw.audio_ensalada, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_028", name = "Chocolate", category = "local_comida", imageResourceId = R.drawable.picto_chocolate, audioResourceId = R.raw.audio_chocolate, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_001", name = "Manzana", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_manzana, audioResourceId = R.raw.audio_manzana, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_003", name = "Galleta", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_galleta, audioResourceId = R.raw.audio_galleta, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_com_004", name = "Leche", category = INITIAL_DYNAMIC_CATEGORY_ID, imageResourceId = R.drawable.picto_leche, audioResourceId = R.raw.audio_leche, levelRequired = 2))
 //
 //
 //        // Ejemplo para otra categoría
-//        pictos.add(Pictogram(pictogramId = "local_ani_001", name = "Perro", category = "local_animales", imageResourceId = R.drawable.picto_perro, audioResourceId = R.raw.audio_perro, levelRequired = 1))
-//        pictos.add(Pictogram(pictogramId = "local_ani_002", name = "Gato", category = "local_animales", imageResourceId = R.drawable.picto_gato, audioResourceId = R.raw.audio_gato, levelRequired = 1))
-
+        pictos.add(Pictogram(pictogramId = "local_ani_001", name = "Perro", category = "local_animales", imageResourceId = R.drawable.picto_perro, audioResourceId = R.raw.audio_perro, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_002", name = "Gato", category = "local_animales", imageResourceId = R.drawable.picto_gato, audioResourceId = R.raw.audio_gato, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_003", name = "Vaca", category = "local_animales", imageResourceId = R.drawable.picto_vaca, audioResourceId = R.raw.audio_vaca, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_004", name = "Delfín", category = "local_animales", imageResourceId = R.drawable.picto_delfin, audioResourceId = R.raw.audio_delfin, levelRequired = 1)) // Nombre de recurso: picto_delfin
+        pictos.add(Pictogram(pictogramId = "local_ani_005", name = "Tigre", category = "local_animales", imageResourceId = R.drawable.picto_tigre, audioResourceId = R.raw.audio_tigre, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_006", name = "Zorro", category = "local_animales", imageResourceId = R.drawable.picto_zorro, audioResourceId = R.raw.audio_zorro, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_007", name = "León", category = "local_animales", imageResourceId = R.drawable.picto_leon, audioResourceId = R.raw.audio_leon, levelRequired = 1)) // Nombre de recurso: picto_leon
+        pictos.add(Pictogram(pictogramId = "local_ani_008", name = "Caballo", category = "local_animales", imageResourceId = R.drawable.picto_caballo, audioResourceId = R.raw.audio_caballo, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_009", name = "Elefante", category = "local_animales", imageResourceId = R.drawable.picto_elefante, audioResourceId = R.raw.audio_elefante, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_010", name = "Insecto", category = "local_animales", imageResourceId = R.drawable.picto_insecto, audioResourceId = R.raw.audio_insecto, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_011", name = "Pingüino", category = "local_animales", imageResourceId = R.drawable.picto_pinguino, audioResourceId = R.raw.audio_pinguino, levelRequired = 1)) // Nombre de recurso: picto_pinguino
+        pictos.add(Pictogram(pictogramId = "local_ani_012", name = "Serpiente", category = "local_animales", imageResourceId = R.drawable.picto_serpiente, audioResourceId = R.raw.audio_serpiente, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_013", name = "Pez", category = "local_animales", imageResourceId = R.drawable.picto_pez, audioResourceId = R.raw.audio_pez, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_014", name = "Rinoceronte", category = "local_animales", imageResourceId = R.drawable.picto_rinoceronte, audioResourceId = R.raw.audio_rinoceronte, levelRequired = 1))
+        pictos.add(Pictogram(pictogramId = "local_ani_014", name = "Araña", category = "local_animales", imageResourceId = R.drawable.picto_aranya, audioResourceId = R.raw.audio_aranya, levelRequired = 1))
 
         return pictos
     }

@@ -2,22 +2,22 @@ package com.example.pictovoice.Data.Model
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
-import android.util.Log // Para logging en fromSnapshot
+import android.util.Log
 
 data class User(
     val userId: String = "",
-    val username: String = "",      // Generado y único, en mayúsculas
+    val username: String = "",
     val fullName: String = "",
-    val email: String = "",         // Usado para Firebase Auth y almacenado en Firestore
+    val email: String = "",
     val role: String = "student",
     val createdAt: Timestamp = Timestamp.now(),
     val lastLogin: Timestamp = Timestamp.now(),
     val profileImageUrl: String = "",
-    // ... otros campos específicos del estudiante/profesor
     val currentLevel: Int = 1,
     val currentExp: Int = 0,
     val totalExp: Int = 0,
-    val unlockedCategories: List<String> = listOf("basico")
+    val unlockedCategories: List<String> = listOf("basico"),
+    val hasPendingWordRequest: Boolean = false // NUEVO CAMPO
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
         "userId" to userId,
@@ -31,7 +31,8 @@ data class User(
         "currentLevel" to currentLevel,
         "currentExp" to currentExp,
         "totalExp" to totalExp,
-        "unlockedCategories" to unlockedCategories
+        "unlockedCategories" to unlockedCategories,
+        "hasPendingWordRequest" to hasPendingWordRequest // AÑADIR AL MAPA
     )
 
     companion object {
@@ -50,7 +51,8 @@ data class User(
                     currentLevel = (data["currentLevel"] as? Long)?.toInt() ?: 1,
                     currentExp = (data["currentExp"] as? Long)?.toInt() ?: 0,
                     totalExp = (data["totalExp"] as? Long)?.toInt() ?: 0,
-                    unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf("basico")
+                    unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf("basico"),
+                    hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false // LEER EL NUEVO CAMPO
                 )
             } catch (e: Exception) {
                 Log.e("User", "Error al convertir snapshot a User: ${e.message}", e)

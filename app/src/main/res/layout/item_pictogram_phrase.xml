@@ -2,15 +2,11 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:padding="4dp">
-
-    <ImageView
-        android:id="@+id/ivPhrasePictogramImage"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        android:background="@drawable/pictogram_border_selected"
-        tools:srcCompat="@drawable/ic_placeholder_image" />
+    android:layout_height="wrap_content" android:paddingVertical="4dp"
+    android:paddingHorizontal="2dp"> <ImageView
+    android:id="@+id/ivPhrasePictogramImage"
+    android:layout_width="70dp"  android:layout_height="70dp" android:scaleType="fitCenter"
+    android:adjustViewBounds="true"
+    android:background="@drawable/pictogram_border_selected"
+    tools:srcCompat="@drawable/ic_placeholder_image" />
 </FrameLayout>

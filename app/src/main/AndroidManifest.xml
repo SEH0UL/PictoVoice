@@ -35,6 +35,12 @@
         </activity>
 
         <activity
+            android:name=".ui.userprofile.UserProfileActivity"
+            android:exported="false">
+            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".ui.home.HomeActivity" />
+        </activity>
+
+        <activity
             android:name=".ui.auth.MainActivity"
             android:exported="true">
             <intent-filter>

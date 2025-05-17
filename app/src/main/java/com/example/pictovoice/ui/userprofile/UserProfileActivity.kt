@@ -1,148 +1,192 @@
-package com.example.pictovoice.ui.userprofile // O el paquete que elijas para esta nueva actividad
+package com.example.pictovoice.ui.userprofile // Ajusta el paquete si es diferente
 
 import android.os.Bundle
-import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import com.example.pictovoice.R // Asegúrate que este import es correcto
-import com.example.pictovoice.databinding.ActivityUserProfileBinding
+import androidx.lifecycle.Observer
+import androidx.lifecycle.viewModelScope
+import com.example.pictovoice.Data.repository.FirestoreRepository
+import com.example.pictovoice.R
+import com.example.pictovoice.databinding.ActivityUserProfileBinding // Asegúrate que es el nombre correcto de tu binding
+import com.example.pictovoice.viewmodels.UserProfileViewModel
+import com.example.pictovoice.viewmodels.UserProfileViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 class UserProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityUserProfileBinding
-    private var targetUserId: String? = null // El ID del usuario cuyo perfil se está viendo
-    private var viewerRole: String? = null   // Quién está viendo el perfil: "alumno" o "profesor"
+    private var targetUserId: String? = null
+    private var viewerUserId: String? = null // El UID del usuario que está viendo el perfil
+    private var viewerRole: String? = null   // El rol del usuario que está viendo el perfil ("student" o "teacher")
 
-    companion object {
-        const val EXTRA_USER_ID = "extra_user_id"
-        const val EXTRA_VIEWER_ROLE = "extra_viewer_role"
-        const val ROLE_STUDENT = "alumno"
-        const val ROLE_TEACHER = "profesor"
+    private val firestoreRepository = FirestoreRepository() // Considera inyección de dependencias
+
+    private val viewModel: UserProfileViewModel by viewModels {
+        UserProfileViewModelFactory(targetUserId ?: "", firestoreRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Inflar el layout que ya creaste: activity_user_profile.xml
         binding = ActivityUserProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Recoger los datos pasados a esta actividad
-        targetUserId = intent.getStringExtra(EXTRA_USER_ID)
-        viewerRole = intent.getStringExtra(EXTRA_VIEWER_ROLE)
-
-        // Lógica para determinar el ID del usuario a mostrar
-        if (targetUserId.isNullOrBlank()) {
-            if (viewerRole == ROLE_STUDENT) {
-                // Si el alumno ve su propio perfil y no se pasó ID, usar el del usuario logueado
-                targetUserId = FirebaseAuth.getInstance().currentUser?.uid
-                if (targetUserId.isNullOrBlank()){
-                    Toast.makeText(this, "Error: No se pudo identificar al usuario.", Toast.LENGTH_LONG).show()
-                    finish()
-                    return
-                }
-            } else {
-                // Si es un profesor y no se especificó qué alumno ver, es un error.
-                Toast.makeText(this, "Error: No se especificó el perfil del alumno a ver.", Toast.LENGTH_LONG).show()
-                finish()
-                return
-            }
-        }
-
-        setupToolbar()
-        configureUiBasedOnRole() // Configurar la UI inicial y visibilidad de botones
-        loadUserProfileData() // Cargar y mostrar datos (por ahora, placeholders)
-    }
-
-    private fun setupToolbar() {
         setSupportActionBar(binding.toolbarUserProfile)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        // Determinar el título de la Toolbar
-        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
-        if (viewerRole == ROLE_STUDENT && targetUserId == currentUserUid) {
-            supportActionBar?.title = "Mi Perfil"
-        } else {
-            supportActionBar?.title = "Perfil del Alumno"
-        }
-    }
-
-    private fun configureUiBasedOnRole() {
-        val isOwnProfile = viewerRole == ROLE_STUDENT && targetUserId == FirebaseAuth.getInstance().currentUser?.uid
-
-        if (viewerRole == ROLE_STUDENT) { // Vista del alumno (viendo su propio perfil o el de otro si se permitiera)
-            // El botón "Solicitar Palabras" solo es relevante si está viendo su propio perfil
-            // y si cumple las condiciones para solicitar (lógica futura).
-            binding.btnSolicitarPalabras.visibility = if (isOwnProfile) View.VISIBLE else View.GONE // Placeholder: visible por ahora
-            binding.btnDesbloquearPalabrasProfesor.visibility = View.GONE
-            binding.btnGenerarInformeProfesor.visibility = View.GONE
-        } else if (viewerRole == ROLE_TEACHER) { // Vista del profesor
-            binding.btnSolicitarPalabras.visibility = View.GONE
-            binding.btnDesbloquearPalabrasProfesor.visibility = View.VISIBLE
-            binding.btnGenerarInformeProfesor.visibility = View.VISIBLE
-        } else {
-            // Rol desconocido, ocultar todos los botones de acción específicos
-            binding.btnSolicitarPalabras.visibility = View.GONE
-            binding.btnDesbloquearPalabrasProfesor.visibility = View.GONE
-            binding.btnGenerarInformeProfesor.visibility = View.GONE
-        }
-    }
-
-    private fun loadUserProfileData() {
-        // --- ESTA ES LA PARTE DE LÓGICA QUE DEJAREMOS PARA MÁS TARDE ---
-        // Aquí es donde crearías una instancia de UserProfileViewModel,
-        // le pasarías el targetUserId, y observarías los LiveData para actualizar la UI.
-
-        // Por AHORA, usamos datos de placeholder para que la pantalla no esté vacía:
-        // Título principal de la pantalla (ya no es necesario si la Toolbar lo tiene)
-        // binding.tvProfileTitle.text = (si el alumno ve su perfil) ? "Tu Perfil" : "Perfil Alumno";
-
-        // Nombre del alumno (debería venir del ViewModel)
-        binding.tvUserProfileName.text = "Cargando nombre..." // Placeholder inicial
-
-        // Nivel y ProgressBar (debería venir del ViewModel)
-        binding.tvLabelNivel.text = "NIVEL" // Esto es fijo
-        binding.tvLevelStart.text = "1"
-        binding.progressBarLevel.progress = 30 // Ejemplo
-        binding.progressBarLevel.max = 100 // Asumiendo que el progreso va de 0 a 100 para el nivel actual
-        binding.tvLevelEnd.text = "2" // (Nivel actual + 1)
-
-        // Estadísticas (deberían venir del ViewModel)
-        binding.tvPalabrasUsadasCount.text = "--"
-        binding.tvPalabrasNuevasCount.text = "--"
-        binding.tvPalabrasDesbloqueadasCount.text = "--"
-        binding.tvPalabrasBloqueadasCount.text = "--"
-
-        // Lógica del botón "Solicitar Palabras" (placeholder)
-        if (binding.btnSolicitarPalabras.visibility == View.VISIBLE) {
-            // El texto real del botón debería ser dinámico, ej. "Solicitar Palabras (Nivel ${siguienteNivel})"
-            binding.btnSolicitarPalabras.text = getString(R.string.solicitar_palabras_placeholder, 2) // Necesitarás este string
-            // La visibilidad real de este botón dependerá de la lógica de si el alumno
-            // ha subido de nivel y aún no ha solicitado las palabras.
+        binding.toolbarUserProfile.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
         }
 
-        // Lógica del botón "Desbloquear Palabras" (placeholder)
-        if(binding.btnDesbloquearPalabrasProfesor.visibility == View.VISIBLE) {
-            binding.btnDesbloquearPalabrasProfesor.text = getString(R.string.desbloquear_palabras_placeholder, 1) // Nivel actual del alumno
+        targetUserId = intent.getStringExtra("USER_ID_EXTRA")
+        // Para determinar quién está viendo, podrías pasar el rol del visualizador
+        // o determinarlo aquí basado en el usuario actualmente autenticado.
+        viewerUserId = FirebaseAuth.getInstance().currentUser?.uid
+        // viewerRole = intent.getStringExtra("VIEWER_ROLE_EXTRA") // O cárgalo desde Firestore si es necesario
+
+        if (targetUserId.isNullOrEmpty()) {
+            Toast.makeText(this, "ID de usuario del perfil no encontrado.", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+        if (viewerUserId.isNullOrEmpty()){
+            Toast.makeText(this, "No se pudo identificar al observador del perfil.", Toast.LENGTH_LONG).show()
+            // Podrías redirigir a login o manejarlo de otra forma
+            finish()
+            return
         }
 
-
-        // Placeholder para la imagen de perfil
-        binding.ivUserProfileImage.setImageResource(R.drawable.ic_default_profile) // O un placeholder con iniciales
-
-        // TODO: Una vez que tengas el ViewModel:
-        // viewModel.loadUserData(targetUserId)
-        // viewModel.userData.observe(this) { user -> actualiza la UI }
-        // viewModel.levelUpStatus.observe(this) { status -> actualiza botón solicitar }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                onBackPressedDispatcher.onBackPressed() // Correcto para el botón de atrás de la Toolbar
-                true
+        // Cargar el rol del visualizador si no se pasó por intent
+        // (Esto es un ejemplo, idealmente ya tendrías esta info)
+        if (viewerRole == null && viewerUserId != null) {
+            viewModel.viewModelScope.launch { // Usar el scope del ViewModel o crear uno nuevo
+                val result = firestoreRepository.getUser(viewerUserId!!)
+                if (result.isSuccess) {
+                    viewerRole = result.getOrNull()?.role
+                    setupUIBasedOnRoleAndProfile()
+                } else {
+                    Toast.makeText(this@UserProfileActivity, "Error al obtener rol del observador.", Toast.LENGTH_SHORT).show()
+                    setupUIBasedOnRoleAndProfile() // Intentar con rol nulo o por defecto
+                }
             }
-            else -> super.onOptionsItemSelected(item)
+        } else {
+            setupUIBasedOnRoleAndProfile()
         }
+
+
+        setupObservers()
+
+        binding.btnSolicitarPalabras.setOnClickListener {
+            viewModel.requestWords()
+        }
+        // Añade aquí los listeners para btnDesbloquearPalabrasProfesor y btnGenerarInformeProfesor si es necesario
+        // Ejemplo:
+         binding.btnDesbloquearPalabrasProfesor.setOnClickListener { /* Lógica profesor */ }
+         binding.btnGenerarInformeProfesor.setOnClickListener { /* Lógica profesor */ }
+    }
+
+    private fun setupUIBasedOnRoleAndProfile() {
+        val isViewingOwnProfileAsStudent = targetUserId == viewerUserId && viewerRole == "student"
+        val isTeacherViewingStudentProfile = viewerRole == "teacher" // Y targetUser es un alumno
+
+        if (isViewingOwnProfileAsStudent) {
+            binding.tvProfileTitle.text = "Tu Perfil"
+            // El botón btnSolicitarPalabras será gestionado por LiveData 'canRequestWords'
+            binding.btnDesbloquearPalabrasProfesor.visibility = View.GONE
+            binding.btnGenerarInformeProfesor.visibility = View.GONE
+        } else if (isTeacherViewingStudentProfile) {
+            // El nombre del alumno se cargará en el observer de userProfile
+            binding.tvProfileTitle.text = "Perfil del Alumno" // Se actualizará con el nombre
+            binding.btnSolicitarPalabras.visibility = View.GONE
+            binding.btnDesbloquearPalabrasProfesor.visibility = View.VISIBLE // Lógica de habilitación/texto pendiente
+            binding.btnGenerarInformeProfesor.visibility = View.VISIBLE // Lógica pendiente
+        } else {
+            // Otro caso (ej. profesor viendo su propio perfil, o alumno viendo perfil de otro alumno - si se permite)
+            binding.tvProfileTitle.text = "Perfil"
+            binding.btnSolicitarPalabras.visibility = View.GONE
+            binding.btnDesbloquearPalabrasProfesor.visibility = View.GONE
+            binding.btnGenerarInformeProfesor.visibility = View.GONE
+        }
+    }
+
+    private fun setupObservers() {
+        viewModel.isLoading.observe(this, Observer { isLoading ->
+            // Podrías tener un ProgressBar general, o deshabilitar botones mientras carga
+            if (isLoading) {
+                // Ejemplo: binding.btnSolicitarPalabras.isEnabled = false
+            } else {
+                // Ejemplo: binding.btnSolicitarPalabras.isEnabled = true (si aplica)
+            }
+            // Si tuvieras un ProgressBar global en el XML:
+            // binding.someGlobalProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        })
+
+        viewModel.errorMessage.observe(this, Observer { errorMessage ->
+            errorMessage?.let {
+                Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+                viewModel.clearErrorMessage()
+            }
+        })
+
+        viewModel.userProfile.observe(this, Observer { user ->
+            user?.let {
+                binding.tvUserProfileName.text = it.fullName
+                binding.tvLevelStart.text = it.currentLevel.toString()
+                binding.tvLevelEnd.text = (it.currentLevel + 1).toString() // Nivel siguiente
+
+                val expNeededForNextLevel = it.currentLevel * 1000 // Asumiendo 1000 EXP por nivel
+                binding.progressBarLevel.max = expNeededForNextLevel
+                binding.progressBarLevel.progress = it.currentExp
+
+                // Actualizar el título del Toolbar o el tvProfileTitle si es un profesor viendo el perfil
+                if (viewerRole == "teacher" && targetUserId != viewerUserId) {
+                    supportActionBar?.title = "Perfil de ${it.fullName}"
+                    binding.tvProfileTitle.text = "Perfil de ${it.fullName}"
+                } else if (targetUserId == viewerUserId) {
+                    supportActionBar?.title = "Mi Perfil"
+                    binding.tvProfileTitle.text = "Mi Perfil"
+                }
+
+
+                // Placeholder para estadísticas (deberás implementarlo cuando tengas la lógica)
+                binding.tvPalabrasUsadasCount.text = "0" // Placeholder
+                binding.tvPalabrasNuevasCount.text = "0" // Placeholder
+                binding.tvPalabrasDesbloqueadasCount.text = "0" // Placeholder
+                binding.tvPalabrasBloqueadasCount.text = "0" // Placeholder
+
+                // Lógica para el texto del botón del profesor "Desbloquear Palabras"
+                if (viewerRole == "teacher"){
+                    binding.btnDesbloquearPalabrasProfesor.text = "Desbloquear Palabras (Nivel ${it.currentLevel})"
+                }
+            }
+        })
+
+        viewModel.canRequestWords.observe(this, Observer { canRequest ->
+            val isViewingOwnProfileAsStudent = targetUserId == viewerUserId && viewerRole == "student"
+            if (isViewingOwnProfileAsStudent) {
+                binding.btnSolicitarPalabras.visibility = if (canRequest) View.VISIBLE else View.GONE
+                binding.btnSolicitarPalabras.isEnabled = canRequest
+                if (canRequest) {
+                    binding.btnSolicitarPalabras.text = "Solicitar Palabras (Nivel ${viewModel.userProfile.value?.currentLevel ?: ""})"
+                }
+            } else {
+                binding.btnSolicitarPalabras.visibility = View.GONE
+            }
+        })
+
+        viewModel.wordRequestOutcome.observe(this, Observer { result ->
+            result?.let {
+                if (it.isSuccess) {
+                    Toast.makeText(this, "Solicitud de palabras enviada.", Toast.LENGTH_SHORT).show()
+                } else {
+                    // El mensaje de error ya se muestra a través de viewModel.errorMessage
+                    // Pero si quieres un Toast específico aquí para este outcome:
+                    // val errorMsg = (it as? com.example.pictovoice.utils.Result.Failure)?.message ?: "No se pudo enviar la solicitud."
+                    // Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
+                }
+                viewModel.clearWordRequestOutcome()
+            }
+        })
     }
 }

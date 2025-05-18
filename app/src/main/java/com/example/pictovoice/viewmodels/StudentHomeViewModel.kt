@@ -11,7 +11,8 @@ import com.example.pictovoice.Data.Model.Category
 import com.example.pictovoice.Data.Model.Pictogram
 import com.example.pictovoice.Data.Model.User
 import com.example.pictovoice.Data.repository.FirestoreRepository
-import com.example.pictovoice.data.datasource.PictogramDataSource // IMPORTANTE: Importar tu DataSource
+import com.example.pictovoice.data.datasource.PictogramDataSource
+
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 

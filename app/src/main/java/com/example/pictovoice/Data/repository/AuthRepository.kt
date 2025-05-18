@@ -26,10 +26,9 @@ class AuthRepository {
         val nameParts = normalizedFullName.split(" ").filter { it.isNotBlank() }
 
         if (nameParts.isEmpty()) {
-            // Fallback si el nombre está vacío o solo espacios
             var fallbackUsername = "USER${System.currentTimeMillis()}"
             while (usersCollection.whereEqualTo("username", fallbackUsername.toUpperCase(Locale.ROOT)).get().await().isEmpty.not()) {
-                fallbackUsername = "USER${System.currentTimeMillis()}${ (0..9).random() }" // Añadir un poco más de aleatoriedad
+                fallbackUsername = "USER${System.currentTimeMillis()}${ (0..9).random() }"
             }
             return fallbackUsername.toUpperCase(Locale.ROOT)
         }
@@ -38,33 +37,29 @@ class AuthRepository {
         val extractedFirstName = firstNamePart.substring(0, min(3, firstNamePart.length))
 
         val firstLastNamePart = if (nameParts.size > 1) {
-            nameParts[1].toUpperCase(Locale.ROOT) // Usamos la segunda parte como el primer apellido
+            nameParts[1].toUpperCase(Locale.ROOT)
         } else {
-            "" // No hay segundo apellido si solo hay un nombre/palabra
+            ""
         }
         val extractedFirstLastName = firstLastNamePart.substring(0, min(3, firstLastNamePart.length))
 
         val nameCode = extractedFirstName + extractedFirstLastName
-
         val fullNameNoSpaces = normalizedFullName.replace(" ", "")
         val lengthSuffix = fullNameNoSpaces.length.toString()
-
-        val baseUsernameAttempt = nameCode + lengthSuffix // Ejemplo: DAVLUN13
+        val baseUsernameAttempt = nameCode + lengthSuffix
 
         var finalUsername = baseUsernameAttempt
         var counter = 0
-        // Bucle para asegurar unicidad, comparando en mayúsculas
         while (true) {
             val usernameToCheck = if (counter == 0) finalUsername else "$baseUsernameAttempt$counter"
             val querySnapshot = usersCollection.whereEqualTo("username", usernameToCheck.toUpperCase(Locale.ROOT)).get().await()
             if (querySnapshot.isEmpty) {
-                finalUsername = usernameToCheck // Username es único
+                finalUsername = usernameToCheck
                 break
             }
             counter++
-            if (counter > 999) { // Límite para evitar bucles infinitos en casos extremos
+            if (counter > 999) {
                 Log.e("AuthRepository", "Could not generate unique username for $fullName after 999 tries.")
-                // Fallback aún más robusto si es necesario, o lanzar excepción
                 var emergencyUsername = "U${System.currentTimeMillis()}"
                 while (usersCollection.whereEqualTo("username", emergencyUsername.toUpperCase(Locale.ROOT)).get().await().isEmpty.not()) {
                     emergencyUsername = "U${System.currentTimeMillis()}${ (0..9).random() }"
@@ -72,7 +67,7 @@ class AuthRepository {
                 return emergencyUsername.toUpperCase(Locale.ROOT)
             }
         }
-        return finalUsername.toUpperCase(Locale.ROOT) // Guardar y devolver en mayúsculas
+        return finalUsername.toUpperCase(Locale.ROOT)
     }
 
     suspend fun login(identifier: String, password: String): kotlin.Result<User> = withContext(Dispatchers.IO) {
@@ -137,18 +132,22 @@ class AuthRepository {
             val firebaseUser = authResult.user
                 ?: return@withContext kotlin.Result.failure(Exception("No se pudo crear el usuario en Firebase Auth."))
 
-            // Generar username único con la NUEVA lógica
-            val username = generateUniqueUsername(fullName) // Ya se devuelve en mayúsculas
+            val username = generateUniqueUsername(fullName) // Asumiendo que esta función ya está actualizada a tu gusto
+
+            // Normalizar fullName para guardarlo y para generar fullNameLowercase
+            val normalizedFullName = fullName.trim().replace("\\s+".toRegex(), " ")
 
             val newUser = User(
                 userId = firebaseUser.uid,
-                username = username, // Almacenar en mayúsculas
-                fullName = fullName.trim().replace("\\s+".toRegex(), " "), // Guardar nombre normalizado
+                username = username,
+                fullName = normalizedFullName, // Guardar nombre normalizado
                 email = email.toLowerCase(Locale.ROOT),
                 role = role,
                 createdAt = com.google.firebase.Timestamp.now(),
                 lastLogin = com.google.firebase.Timestamp.now(),
-                unlockedCategories = if (role == "student") listOf("local_comida") else emptyList() // Usar la constante si es posible
+                unlockedCategories = if (role == "student") listOf("local_comida") else emptyList(),
+                // --- POBLAR EL NUEVO CAMPO ---
+                fullNameLowercase = normalizedFullName.toLowerCase(Locale.ROOT)
             )
 
             usersCollection.document(firebaseUser.uid).set(newUser.toMap()).await()
@@ -156,6 +155,7 @@ class AuthRepository {
 
         } catch (e: Exception) {
             Log.e("AuthRepository", "Error durante el registro: ${e.message}", e)
+            // Considerar eliminar el usuario de Auth si falla la escritura en Firestore
             firebaseAuth.currentUser?.delete()?.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Log.d("AuthRepository", "User deleted from Auth after Firestore registration failure.")

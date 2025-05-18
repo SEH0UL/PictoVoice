@@ -3,6 +3,7 @@ package com.example.pictovoice.Data.Model
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import android.util.Log
+import java.util.Locale // Necesario para toLowerCase(Locale.ROOT)
 
 private const val INITIAL_DEFAULT_CATEGORY_ID = "local_comida"
 
@@ -22,10 +23,11 @@ data class User(
     val hasPendingWordRequest: Boolean = false,
     val levelWordsRequestedFor: Int = 0,
     val maxContentLevelApproved: Int = 1,
+    val wordsUsedCount: Int = 0,
+    val phrasesCreatedCount: Int = 0,
 
-    // --- NUEVOS CAMPOS PARA ESTADÍSTICAS ---
-    val wordsUsedCount: Int = 0,        // Contador de palabras usadas en frases reproducidas
-    val phrasesCreatedCount: Int = 0    // Contador de frases reproducidas
+    // --- NUEVO CAMPO PARA BÚSQUEDA CASE-INSENSITIVE ---
+    val fullNameLowercase: String = ""
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
         "userId" to userId,
@@ -43,9 +45,10 @@ data class User(
         "hasPendingWordRequest" to hasPendingWordRequest,
         "levelWordsRequestedFor" to levelWordsRequestedFor,
         "maxContentLevelApproved" to maxContentLevelApproved,
-        // --- AÑADIR NUEVOS CAMPOS AL MAPA ---
         "wordsUsedCount" to wordsUsedCount,
-        "phrasesCreatedCount" to phrasesCreatedCount
+        "phrasesCreatedCount" to phrasesCreatedCount,
+        // --- AÑADIR AL MAPA ---
+        "fullNameLowercase" to fullNameLowercase
     )
 
     companion object {
@@ -68,9 +71,10 @@ data class User(
                     hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false,
                     levelWordsRequestedFor = (data["levelWordsRequestedFor"] as? Long)?.toInt() ?: 0,
                     maxContentLevelApproved = (data["maxContentLevelApproved"] as? Long)?.toInt() ?: 1,
-                    // --- LEER NUEVOS CAMPOS DEL SNAPSHOT ---
                     wordsUsedCount = (data["wordsUsedCount"] as? Long)?.toInt() ?: 0,
-                    phrasesCreatedCount = (data["phrasesCreatedCount"] as? Long)?.toInt() ?: 0
+                    phrasesCreatedCount = (data["phrasesCreatedCount"] as? Long)?.toInt() ?: 0,
+                    // --- LEER DEL SNAPSHOT ---
+                    fullNameLowercase = data["fullNameLowercase"] as? String ?: (data["fullName"] as? String ?: "").toLowerCase(Locale.ROOT) // Fallback si no existe aún
                 )
             } catch (e: Exception) {
                 Log.e("User", "Error al convertir snapshot a User: ${e.message}", e)

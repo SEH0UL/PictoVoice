@@ -12,6 +12,7 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 // Constantes de Category ID (idealmente, desde un archivo común, aquí duplicadas/definidas para el repositorio)
 private const val CATEGORY_ID_COMIDA = "local_comida"
@@ -234,18 +235,26 @@ class FirestoreRepository {
             return@withContext kotlin.Result.success(emptyList())
         }
         try {
+            // Convertir el término de búsqueda a minúsculas
+            val lowercaseQuery = nameQuery.trim().toLowerCase(Locale.ROOT)
+
+            // Realizar la búsqueda sobre el campo 'fullNameLowercase'
             val querySnapshot = usersCollection
-                .whereEqualTo("role", "student")
-                .orderBy("fullName")
-                .startAt(nameQuery.trim())
-                .endAt(nameQuery.trim() + '\uf8ff')
+                .whereEqualTo("role", "student")        // Filtrar por rol
+                .orderBy("fullNameLowercase")           // Ordenar por el campo en minúsculas
+                .startAt(lowercaseQuery)                // Inicio del rango de búsqueda (prefijo)
+                .endAt(lowercaseQuery + '\uf8ff')       // Fin del rango para búsqueda de prefijo
                 .limit(limit)
                 .get()
                 .await()
+
             val students = querySnapshot.documents.mapNotNull { User.fromSnapshot(it) }
+            Log.d("FirestoreRepo", "Búsqueda insensible de alumnos por '$lowercaseQuery' encontró ${students.size} resultados.")
             kotlin.Result.success(students)
         } catch (e: Exception) {
-            Log.e("FirestoreRepo", "Error buscando alumnos por nombre '$nameQuery'", e)
+            Log.e("FirestoreRepo", "Error buscando alumnos (insensible) por nombre '$nameQuery'", e)
+            // Si el error es por falta de índice, Logcat lo indicará con un enlace.
+            // Necesitarás un índice en 'users' sobre: role (ASC), fullNameLowercase (ASC).
             kotlin.Result.failure(e)
         }
     }

@@ -33,6 +33,21 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // --- INICIO: Lógica TEMPORAL para ejecutar la actualización UNA VEZ ---
+        // Descomenta el siguiente bloque para ejecutar la actualización de `fullNameLowercase`.
+        // Después de UNA ejecución exitosa, ¡COMENTA O ELIMINA ESTE BLOQUE DE NUEVO!
+        /*
+        lifecycleScope.launch {
+            Log.d("MainActivity_Backfill", "Iniciando backfill de fullNameLowercase para alumnos existentes...")
+            val firestoreRepo = FirestoreRepository() // Creamos una instancia para usar la función
+            val updateMessage = firestoreRepo.backfillFullNameLowercaseForAllStudents()
+            Toast.makeText(this@MainActivity, updateMessage, Toast.LENGTH_LONG).show()
+            Log.d("MainActivity_Backfill", "Backfill completado: $updateMessage")
+        }
+        */
+        // --- FIN: Lógica TEMPORAL ---
+
+
         // Comprobar si el usuario ya está logueado
         if (authRepository.isUserLoggedIn()) {
             Log.d("MainActivity", "Usuario previamente logueado. Intentando restaurar sesión...")

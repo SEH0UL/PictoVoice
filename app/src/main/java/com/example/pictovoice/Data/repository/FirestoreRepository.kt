@@ -344,6 +344,52 @@ class FirestoreRepository {
     }
     // --- FIN NUEVAS FUNCIONES ---
 
+
+    // --- FUNCIÓN TEMPORAL PARA ACTUALIZAR DOCUMENTOS ANTIGUOS ---
+//    suspend fun backfillFullNameLowercaseForAllStudents(): String = withContext(Dispatchers.IO) {
+//        var message: String
+//        try {
+//            // CUIDADO: Obtener todos los documentos puede ser costoso si tienes muchos.
+//            // Para un número limitado de usuarios de prueba, está bien.
+//            // Si tienes muchos, considera hacer la consulta por lotes (paginada).
+//            val querySnapshot = usersCollection.whereEqualTo("role", "student").get().await()
+//            // O si quieres actualizar TODOS los usuarios (incluyendo profesores, aunque no lo necesiten para esta búsqueda):
+//            // val querySnapshot = usersCollection.get().await()
+//
+//            val batch = db.batch() // Usamos un batch para eficiencia
+//            var updatesMade = 0
+//            var usersProcessed = 0
+//
+//            for (document in querySnapshot.documents) {
+//                usersProcessed++
+//                val userFullName = document.getString("fullName")
+//                val existingLowercase = document.getString("fullNameLowercase")
+//
+//                // Actualizar solo si fullNameLowercase no existe o está vacío, y fullName sí existe
+//                if (userFullName != null && userFullName.isNotBlank() && (existingLowercase == null || existingLowercase.isBlank())) {
+//                    val newLowercaseName = userFullName.trim().replace("\\s+".toRegex(), " ").toLowerCase(Locale.ROOT)
+//                    batch.update(document.reference, "fullNameLowercase", newLowercaseName)
+//                    updatesMade++
+//                    Log.d("FirestoreRepo_Backfill", "Añadiendo a batch: User ${document.id}, fullNameLowercase: $newLowercaseName")
+//                }
+//            }
+//
+//            if (updatesMade > 0) {
+//                batch.commit().await()
+//                message = "$updatesMade de $usersProcessed alumnos actualizados con fullNameLowercase."
+//                Log.d("FirestoreRepo_Backfill", message)
+//            } else {
+//                message = "No se necesitaron actualizaciones para fullNameLowercase en $usersProcessed alumnos procesados."
+//                Log.d("FirestoreRepo_Backfill", message)
+//            }
+//        } catch (e: Exception) {
+//            message = "Error durante la actualización de fullNameLowercase: ${e.message}"
+//            Log.e("FirestoreRepo_Backfill", message, e)
+//        }
+//        return@withContext message
+//    }
+    // --- FIN DE LA FUNCIÓN TEMPORAL ---
+
     // addExperienceToStudent sigue igual, desbloquea las CARPETAS (unlockedCategories) al subir de nivel.
     // La VISIBILIDAD del CONTENIDO DENTRO de esas carpetas dependerá de maxContentLevelApproved.
     suspend fun addExperienceToStudent(studentId: String, expToAdd: Int): kotlin.Result<Pair<Int, Int>> = withContext(Dispatchers.IO) {

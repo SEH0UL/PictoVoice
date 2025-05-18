@@ -10,59 +10,79 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.util.Locale
+import kotlin.math.min // Necesario para kotlin.math.min
 
 class AuthRepository {
     private val firebaseAuth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
     private val usersCollection = firestore.collection("users")
 
-    // Función para verificar si el usuario ya está logueado
     fun isUserLoggedIn(): Boolean {
         return firebaseAuth.currentUser != null
     }
 
     suspend fun generateUniqueUsername(fullName: String): String {
-        val nameParts = fullName.split(" ").filter { it.isNotBlank() }
-        if (nameParts.isEmpty()) return "USER${System.currentTimeMillis()}"
+        val normalizedFullName = fullName.trim().replace("\\s+".toRegex(), " ")
+        val nameParts = normalizedFullName.split(" ").filter { it.isNotBlank() }
 
-        // Para el nombre completo, usamos toUpperCase(Locale.ROOT) para asegurar consistencia
-        // independientemente del Locale del dispositivo, especialmente para identificadores.
-        val firstName = nameParts.first().toUpperCase(Locale.ROOT)
-        val baseUsername = if (nameParts.size > 1) {
-            // CORRECCIÓN: Convertir el Char a String ANTES de llamar toUpperCase(Locale)
-            val lastNameInitial = nameParts.last().first().toString().toUpperCase(Locale.ROOT)
-            "$firstName$lastNameInitial"
-        } else {
-            firstName
+        if (nameParts.isEmpty()) {
+            // Fallback si el nombre está vacío o solo espacios
+            var fallbackUsername = "USER${System.currentTimeMillis()}"
+            while (usersCollection.whereEqualTo("username", fallbackUsername.toUpperCase(Locale.ROOT)).get().await().isEmpty.not()) {
+                fallbackUsername = "USER${System.currentTimeMillis()}${ (0..9).random() }" // Añadir un poco más de aleatoriedad
+            }
+            return fallbackUsername.toUpperCase(Locale.ROOT)
         }
 
-        var finalUsername = baseUsername
+        val firstNamePart = nameParts.first().toUpperCase(Locale.ROOT)
+        val extractedFirstName = firstNamePart.substring(0, min(3, firstNamePart.length))
+
+        val firstLastNamePart = if (nameParts.size > 1) {
+            nameParts[1].toUpperCase(Locale.ROOT) // Usamos la segunda parte como el primer apellido
+        } else {
+            "" // No hay segundo apellido si solo hay un nombre/palabra
+        }
+        val extractedFirstLastName = firstLastNamePart.substring(0, min(3, firstLastNamePart.length))
+
+        val nameCode = extractedFirstName + extractedFirstLastName
+
+        val fullNameNoSpaces = normalizedFullName.replace(" ", "")
+        val lengthSuffix = fullNameNoSpaces.length.toString()
+
+        val baseUsernameAttempt = nameCode + lengthSuffix // Ejemplo: DAVLUN13
+
+        var finalUsername = baseUsernameAttempt
         var counter = 0
-        // Bucle para asegurar unicidad
+        // Bucle para asegurar unicidad, comparando en mayúsculas
         while (true) {
-            // Comparamos con el username en Firestore que también debería estar en mayúsculas (según esta lógica)
-            val querySnapshot = usersCollection.whereEqualTo("username", finalUsername).get().await()
+            val usernameToCheck = if (counter == 0) finalUsername else "$baseUsernameAttempt$counter"
+            val querySnapshot = usersCollection.whereEqualTo("username", usernameToCheck.toUpperCase(Locale.ROOT)).get().await()
             if (querySnapshot.isEmpty) {
-                break // Username es único
+                finalUsername = usernameToCheck // Username es único
+                break
             }
             counter++
-            finalUsername = "$baseUsername$counter"
+            if (counter > 999) { // Límite para evitar bucles infinitos en casos extremos
+                Log.e("AuthRepository", "Could not generate unique username for $fullName after 999 tries.")
+                // Fallback aún más robusto si es necesario, o lanzar excepción
+                var emergencyUsername = "U${System.currentTimeMillis()}"
+                while (usersCollection.whereEqualTo("username", emergencyUsername.toUpperCase(Locale.ROOT)).get().await().isEmpty.not()) {
+                    emergencyUsername = "U${System.currentTimeMillis()}${ (0..9).random() }"
+                }
+                return emergencyUsername.toUpperCase(Locale.ROOT)
+            }
         }
-        return finalUsername
+        return finalUsername.toUpperCase(Locale.ROOT) // Guardar y devolver en mayúsculas
     }
 
-
-    // LOGIN: Ahora devuelve kotlin.Result<User>
     suspend fun login(identifier: String, password: String): kotlin.Result<User> = withContext(Dispatchers.IO) {
         try {
-            var userId: String? = null
-            var userEmail: String? = null
+            var userEmail: String?
 
-            // Paso 1: Determinar si el identifier es un email o un username
-            if (identifier.contains("@")) { // Asumimos que es un email
-                userEmail = identifier.toLowerCase(Locale.ROOT) // Normalizar email a minúsculas
-            } else { // Asumimos que es un username
-                // Buscamos el username en mayúsculas, ya que así se genera y se guarda
+            if (identifier.contains("@")) {
+                userEmail = identifier.toLowerCase(Locale.ROOT)
+            } else {
+                // Los usernames se guardan/comparan en MAYÚSCULAS
                 val userQuery = usersCollection.whereEqualTo("username", identifier.toUpperCase(Locale.ROOT)).limit(1).get().await()
                 if (userQuery.isEmpty) {
                     return@withContext kotlin.Result.failure(Exception("Usuario no encontrado."))
@@ -71,25 +91,22 @@ class AuthRepository {
                 if (foundUser == null || foundUser.email.isBlank()) {
                     return@withContext kotlin.Result.failure(Exception("No se pudo obtener el email del usuario."))
                 }
-                userEmail = foundUser.email // El email ya debería estar normalizado en Firestore
+                userEmail = foundUser.email
             }
 
             if (userEmail.isNullOrBlank()) {
                 return@withContext kotlin.Result.failure(Exception("Identificador de usuario no válido."))
             }
 
-            // Paso 2: Autenticar con Firebase Auth usando el email
             val authResult = firebaseAuth.signInWithEmailAndPassword(userEmail, password).await()
             val firebaseUser = authResult.user
-            if (firebaseUser == null) {
-                return@withContext kotlin.Result.failure(Exception("Error de autenticación de Firebase."))
-            }
-            userId = firebaseUser.uid // UID de Firebase Auth
+                ?: return@withContext kotlin.Result.failure(Exception("Error de autenticación de Firebase."))
 
-            // Paso 3: Obtener el documento del usuario de Firestore
+            val userId = firebaseUser.uid
+
             val userDocument = usersCollection.document(userId).get().await()
             if (!userDocument.exists()) {
-                firebaseAuth.signOut()
+                firebaseAuth.signOut() // Importante: desloguear si no hay datos en Firestore
                 return@withContext kotlin.Result.failure(Exception("Datos del usuario no encontrados en la base de datos."))
             }
 
@@ -99,9 +116,7 @@ class AuthRepository {
                 return@withContext kotlin.Result.failure(Exception("No se pudieron procesar los datos del usuario."))
             }
 
-            // Opcional: Actualizar lastLogin
             usersCollection.document(userId).update("lastLogin", com.google.firebase.Timestamp.now()).await()
-
             kotlin.Result.success(user)
 
         } catch (e: FirebaseAuthInvalidUserException) {
@@ -112,44 +127,43 @@ class AuthRepository {
             kotlin.Result.failure(Exception("Usuario o contraseña incorrectos."))
         } catch (e: Exception) {
             Log.e("AuthRepository", "Error durante el login: ${e.message}", e)
-            kotlin.Result.failure(Exception("Error durante el login: ${e.localizedMessage}"))
+            kotlin.Result.failure(Exception("Error durante el login: ${e.localizedMessage ?: "Error desconocido"}"))
         }
     }
 
     suspend fun register(fullName: String, email: String, password: String, role: String): kotlin.Result<String> = withContext(Dispatchers.IO) {
         try {
-            // Paso 1: Crear usuario en Firebase Auth (Firebase Auth maneja la normalización del email para la autenticación)
             val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user
-            if (firebaseUser == null) {
-                return@withContext kotlin.Result.failure(Exception("No se pudo crear el usuario en Firebase Auth."))
-            }
+                ?: return@withContext kotlin.Result.failure(Exception("No se pudo crear el usuario en Firebase Auth."))
 
-            // Paso 2: Generar username único (la función generateUniqueUsername ya lo devuelve en mayúsculas)
-            val username = generateUniqueUsername(fullName)
+            // Generar username único con la NUEVA lógica
+            val username = generateUniqueUsername(fullName) // Ya se devuelve en mayúsculas
 
-            // Paso 3: Crear objeto User
             val newUser = User(
                 userId = firebaseUser.uid,
-                username = username, // Ya está en mayúsculas
-                fullName = fullName,
-                email = email.toLowerCase(Locale.ROOT), // Guardar email normalizado en Firestore
+                username = username, // Almacenar en mayúsculas
+                fullName = fullName.trim().replace("\\s+".toRegex(), " "), // Guardar nombre normalizado
+                email = email.toLowerCase(Locale.ROOT),
                 role = role,
                 createdAt = com.google.firebase.Timestamp.now(),
                 lastLogin = com.google.firebase.Timestamp.now(),
-                unlockedCategories = if (role == "student") listOf("basico") else emptyList()
+                unlockedCategories = if (role == "student") listOf("local_comida") else emptyList() // Usar la constante si es posible
             )
 
-            // Paso 4: Guardar usuario en Firestore
             usersCollection.document(firebaseUser.uid).set(newUser.toMap()).await()
-
             kotlin.Result.success(username)
 
         } catch (e: Exception) {
             Log.e("AuthRepository", "Error durante el registro: ${e.message}", e)
-            // Considerar la limpieza si el usuario se creó en Auth pero falló en Firestore
-            // firebaseUser?.delete()?.await() // Esto requiere reautenticación reciente y es complejo de manejar aquí.
-            kotlin.Result.failure(Exception("Error durante el registro: ${e.localizedMessage}"))
+            firebaseAuth.currentUser?.delete()?.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d("AuthRepository", "User deleted from Auth after Firestore registration failure.")
+                } else {
+                    Log.w("AuthRepository", "Failed to delete user from Auth after Firestore registration failure.", task.exception)
+                }
+            }
+            kotlin.Result.failure(Exception("Error durante el registro: ${e.localizedMessage ?: "Error desconocido"}"))
         }
     }
 

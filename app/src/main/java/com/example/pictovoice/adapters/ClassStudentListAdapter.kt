@@ -34,14 +34,12 @@ class ClassStudentListAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         init {
-            // Listener para eliminar alumno
             binding.btnRemoveStudentFromClass.setOnClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onRemoveStudentClick(getItem(position))
                 }
             }
-            // Listener para el item completo (navegar al perfil del alumno)
             itemView.setOnClickListener{
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
@@ -54,28 +52,28 @@ class ClassStudentListAdapter(
             binding.tvStudentItemName.text = student.fullName
             binding.tvStudentItemLevel.text = "Nivel: ${student.currentLevel}"
 
-            // Cargar imagen de perfil (ejemplo con placeholder, puedes usar Glide)
-            // if (student.profileImageUrl.isNotBlank()) {
-            //    Glide.with(binding.ivStudentItemProfile.context).load(student.profileImageUrl)
-            //        .placeholder(R.drawable.ic_default_profile)
-            //        .error(R.drawable.ic_default_profile)
-            //        .circleCrop()
-            //        .into(binding.ivStudentItemProfile)
-            // } else {
-            binding.ivStudentItemProfile.setImageResource(R.drawable.ic_default_profile)
-            // }
+            // Cargar imagen de perfil (tu lógica existente)
+            // if (student.profileImageUrl.isNotBlank()) { ... } else { ... }
+            binding.ivStudentItemProfile.setImageResource(R.drawable.ic_default_profile) // Placeholder actual
 
-            // Lógica para el indicador de notificación (ejemplo básico)
-            // Deberás tener una forma de saber si el alumno tiene notificaciones pendientes.
-            // val hasNotification = student.hasPendingNotification // Este campo no existe en tu User.kt actual
-            val hasNotification = false // Placeholder, cámbialo según tu lógica de notificaciones
-            if (hasNotification) {
-                binding.ivStudentItemNotification.setImageResource(R.drawable.ic_notifications) // Icono de notificación activa
+            // --- INICIO: Lógica actualizada para el icono de notificación ---
+            if (student.hasPendingWordRequest) {
+                binding.ivStudentItemNotification.setImageResource(R.drawable.ic_notifications) // Icono para notificación activa
                 binding.ivStudentItemNotification.visibility = View.VISIBLE
+                // Opcional: Cambiar el color del icono si es un vector drawable y quieres tintarlo
+                // binding.ivStudentItemNotification.setColorFilter(ContextCompat.getColor(itemView.context, R.color.tu_color_notificacion_activa))
             } else {
-                binding.ivStudentItemNotification.setImageResource(R.drawable.ic_notifications_none) // Icono de no notificaciones
-                binding.ivStudentItemNotification.visibility = View.VISIBLE // O View.GONE si prefieres ocultarlo sin notificaciones
+                // Decide qué hacer si no hay notificación:
+                // Opción 1: Ocultar el icono completamente
+                // binding.ivStudentItemNotification.visibility = View.GONE
+
+                // Opción 2: Mostrar un icono de "sin notificaciones" o hacerlo menos prominente
+                binding.ivStudentItemNotification.setImageResource(R.drawable.ic_notifications_none) // Icono para no notificaciones
+                binding.ivStudentItemNotification.visibility = View.VISIBLE // O View.INVISIBLE si prefieres mantener el espacio
+                // Opcional: Cambiar el color para que sea más tenue
+                // binding.ivStudentItemNotification.setColorFilter(ContextCompat.getColor(itemView.context, R.color.tu_color_notificacion_inactiva))
             }
+            // --- FIN: Lógica actualizada para el icono de notificación ---
         }
     }
 

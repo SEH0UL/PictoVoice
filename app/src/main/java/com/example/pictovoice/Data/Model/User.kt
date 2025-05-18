@@ -15,12 +15,13 @@ data class User(
     val createdAt: Timestamp = Timestamp.now(),
     val lastLogin: Timestamp = Timestamp.now(),
     val profileImageUrl: String = "",
-    val currentLevel: Int = 1,
+    val currentLevel: Int = 1, // Nivel actual del alumno (por EXP)
     val currentExp: Int = 0,
     val totalExp: Int = 0,
-    val unlockedCategories: List<String> = listOf(INITIAL_DEFAULT_CATEGORY_ID),
+    val unlockedCategories: List<String> = listOf(INITIAL_DEFAULT_CATEGORY_ID), // Carpetas que PUEDE ver (se actualiza al subir de nivel)
     val hasPendingWordRequest: Boolean = false,
-    val levelWordsRequestedFor: Int = 0 // NUEVO CAMPO: Nivel para el que ya se solicitaron palabras
+    val levelWordsRequestedFor: Int = 0,
+    val maxContentLevelApproved: Int = 1 // NUEVO: Nivel máximo de contenido aprobado por el profesor
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
         "userId" to userId,
@@ -36,7 +37,8 @@ data class User(
         "totalExp" to totalExp,
         "unlockedCategories" to unlockedCategories,
         "hasPendingWordRequest" to hasPendingWordRequest,
-        "levelWordsRequestedFor" to levelWordsRequestedFor // Añadir al mapa
+        "levelWordsRequestedFor" to levelWordsRequestedFor,
+        "maxContentLevelApproved" to maxContentLevelApproved // Añadir al mapa
     )
 
     companion object {
@@ -57,7 +59,8 @@ data class User(
                     totalExp = (data["totalExp"] as? Long)?.toInt() ?: 0,
                     unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf(INITIAL_DEFAULT_CATEGORY_ID),
                     hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false,
-                    levelWordsRequestedFor = (data["levelWordsRequestedFor"] as? Long)?.toInt() ?: 0 // Leer el nuevo campo
+                    levelWordsRequestedFor = (data["levelWordsRequestedFor"] as? Long)?.toInt() ?: 0,
+                    maxContentLevelApproved = (data["maxContentLevelApproved"] as? Long)?.toInt() ?: 1 // Leer el nuevo campo, default 1
                 )
             } catch (e: Exception) {
                 Log.e("User", "Error al convertir snapshot a User: ${e.message}", e)

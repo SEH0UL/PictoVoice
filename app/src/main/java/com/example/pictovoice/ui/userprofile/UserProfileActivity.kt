@@ -1,6 +1,7 @@
 package com.example.pictovoice.ui.userprofile // Ajusta el paquete si es diferente
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -78,6 +79,18 @@ class UserProfileActivity : AppCompatActivity() {
 
         setupClickListeners()
         setupObservers()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Recargar los datos del perfil cada vez que la actividad vuelve a primer plano.
+        // Esto asegurará que _canRequestWords se reevalúe con los datos más frescos de Firestore.
+        // Es importante si el estado del usuario (nivel, solicitudes) pudo haber cambiado
+        // mientras esta pantalla no estaba visible.
+        if (targetUserId != null) { // Asegúrate de que targetUserId ya está inicializado
+            Log.d("UserProfileActivity", "onResume: Reloading user profile for $targetUserId")
+            viewModel.loadUserProfile()
+        }
     }
 
     private fun setupUIBasedOnRoleAndProfile() {

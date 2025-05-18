@@ -275,6 +275,23 @@ class FirestoreRepository {
         }
     }
 
+    // El profesor aprueba la solicitud Y establece el nivel de contenido aprobado
+    suspend fun approveWordRequestAndSetContentLevel(userId: String, levelApproved: Int): kotlin.Result<Unit> = try {
+        usersCollection.document(userId)
+            .update(mapOf(
+                "hasPendingWordRequest" to false,
+                "maxContentLevelApproved" to levelApproved // Actualizar el nivel de contenido aprobado
+            ))
+            .await()
+        Log.d("FirestoreRepo", "Approved word request for user $userId and set maxContentLevelApproved to $levelApproved")
+        kotlin.Result.success(Unit)
+    } catch (e: Exception) {
+        Log.e("FirestoreRepo", "Error approving request / setting content level for $userId", e)
+        kotlin.Result.failure(e)
+    }
+
+    // addExperienceToStudent sigue igual, desbloquea las CARPETAS (unlockedCategories) al subir de nivel.
+    // La VISIBILIDAD del CONTENIDO DENTRO de esas carpetas dependerá de maxContentLevelApproved.
     suspend fun addExperienceToStudent(studentId: String, expToAdd: Int): kotlin.Result<Pair<Int, Int>> = withContext(Dispatchers.IO) {
         try {
             val userDocRef = usersCollection.document(studentId)
@@ -292,9 +309,9 @@ class FirestoreRepository {
                 var newLevel = currentLevel
                 val initialLevelBeforeLoop = currentLevel
 
-                var expNeededForNextLevel = newLevel * 1000
+                var expNeededForNextLevel = newLevel * 1000 // Asumiendo 1000 EXP por nivel.
 
-                while (newCurrentExp >= expNeededForNextLevel && newLevel < 100) {
+                while (newCurrentExp >= expNeededForNextLevel && newLevel < 100) { // Límite de nivel 100
                     newCurrentExp -= expNeededForNextLevel
                     newLevel++
                     expNeededForNextLevel = newLevel * 1000
@@ -311,7 +328,7 @@ class FirestoreRepository {
                     Log.d("FirestoreRepo", "User $studentId leveled up from $initialLevelBeforeLoop to $newLevel")
                     for (levelReached in (initialLevelBeforeLoop + 1)..newLevel) {
                         levelUnlockMap[levelReached]?.forEach { categoryIdToUnlock ->
-                            Log.d("FirestoreRepo", "Unlocking category $categoryIdToUnlock for user $studentId at level $levelReached")
+                            Log.d("FirestoreRepo", "Unlocking FOLDER $categoryIdToUnlock for user $studentId at level $levelReached")
                             transaction.update(userDocRef, "unlockedCategories", FieldValue.arrayUnion(categoryIdToUnlock))
                         }
                     }

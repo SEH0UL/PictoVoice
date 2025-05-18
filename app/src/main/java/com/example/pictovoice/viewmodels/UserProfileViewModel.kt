@@ -33,6 +33,7 @@ class UserProfileViewModel(
     private val _approveWordRequestOutcome = MutableLiveData<Result<Unit>?>()
     val approveWordRequestOutcome: LiveData<Result<Unit>?> = _approveWordRequestOutcome
 
+
     init {
         loadUserProfile()
     }
@@ -45,15 +46,11 @@ class UserProfileViewModel(
                 if (result.isSuccess) {
                     val user = result.getOrNull()
                     _userProfile.value = user
-                    // NUEVA LÓGICA para determinar si el botón "Solicitar Palabras" debe ser visible:
-                    // 1. El usuario es un estudiante.
-                    // 2. No hay una solicitud activa pendiente (hasPendingWordRequest == false).
-                    // 3. El nivel actual del usuario es MAYOR que el nivel para el que ya solicitó palabras.
                     val canActuallyRequest = user?.role == "student" &&
                             user.hasPendingWordRequest == false &&
                             (user.currentLevel > user.levelWordsRequestedFor)
                     _canRequestWords.value = canActuallyRequest
-                    Log.d("UserProfileVM", "loadUserProfile: User Level: ${user?.currentLevel}, RequestedForLevel: ${user?.levelWordsRequestedFor}, PendingReq: ${user?.hasPendingWordRequest}, CanRequest: $canActuallyRequest")
+                    Log.d("UserProfileVM", "loadUserProfile: User Level: ${user?.currentLevel}, ReqForLvl: ${user?.levelWordsRequestedFor}, Pending: ${user?.hasPendingWordRequest}, MaxApprovedLvl: ${user?.maxContentLevelApproved}, CanRequest: $canActuallyRequest")
                 } else {
                     _errorMessage.value = "Error al cargar el perfil: ${result.exceptionOrNull()?.message}"
                 }
@@ -65,35 +62,28 @@ class UserProfileViewModel(
         }
     }
 
-    fun requestWords() {
+    fun requestWords() { // Llamado por el alumno
         _isLoading.value = true
         viewModelScope.launch {
             val currentUser = _userProfile.value
-            // Validar si realmente puede solicitar según la lógica de _canRequestWords
             if (currentUser == null || currentUser.role != "student" ||
                 currentUser.hasPendingWordRequest == true ||
                 currentUser.currentLevel <= currentUser.levelWordsRequestedFor) {
-
                 _errorMessage.value = "No se cumplen las condiciones para solicitar palabras ahora."
-                Log.w("UserProfileVM", "requestWords: Pre-conditions not met. Level: ${currentUser?.currentLevel}, RequestedFor: ${currentUser?.levelWordsRequestedFor}, Pending: ${currentUser?.hasPendingWordRequest}")
                 _isLoading.value = false
-                // No actualizamos _wordRequestOutcome a Failure aquí necesariamente, ya que el botón no debería haber estado visible.
-                // Pero si lo estuvo por algún error de sincronización, sí.
                 _wordRequestOutcome.value = Result.Failure(Exception("Condiciones no cumplidas para la solicitud."))
                 return@launch
             }
 
             try {
-                // Usar la nueva función del repositorio que actualiza ambos campos
                 val result = firestoreRepository.recordStudentWordRequest(targetUserId, currentUser.currentLevel)
                 if (result.isSuccess) {
                     _wordRequestOutcome.value = Result.Success(Unit)
-                    // Actualizar el perfil local para reflejar ambos cambios
                     _userProfile.value = currentUser.copy(
                         hasPendingWordRequest = true,
                         levelWordsRequestedFor = currentUser.currentLevel
                     )
-                    _canRequestWords.value = false // Ocultar el botón tras la solicitud exitosa
+                    _canRequestWords.value = false
                     _errorMessage.value = "Solicitud de palabras enviada para el Nivel ${currentUser.currentLevel}."
                 } else {
                     _errorMessage.value = "Error al enviar la solicitud: ${result.exceptionOrNull()?.message}"
@@ -108,36 +98,45 @@ class UserProfileViewModel(
         }
     }
 
-    fun approveWordRequest() { // Esta función la usa el profesor
+    fun approveWordRequest() { // Llamado por el profesor desde el perfil del alumno (targetUserId)
         _isLoading.value = true
         viewModelScope.launch {
-            val studentUser = _userProfile.value // Este es el perfil del alumno que se está viendo
+            val studentUser = _userProfile.value // Este es el User del alumno (targetUserId)
             if (studentUser == null || studentUser.role != "student") {
-                _errorMessage.value = "Acción no permitida o usuario no válido para esta operación."
+                _errorMessage.value = "Usuario no válido para esta operación."
                 _isLoading.value = false
                 _approveWordRequestOutcome.value = Result.Failure(Exception("Usuario no es estudiante o es nulo."))
                 return@launch
             }
 
-            // El profesor solo necesita cambiar hasPendingWordRequest a false.
-            // levelWordsRequestedFor ya fue establecido por el alumno.
-            if (studentUser.hasPendingWordRequest == false) {
-                _errorMessage.value = "El alumno no tiene una solicitud de palabras pendiente para aprobar."
+            if (!studentUser.hasPendingWordRequest) {
+                _errorMessage.value = "El alumno no tiene una solicitud de palabras pendiente."
                 _isLoading.value = false
+                // Opcionalmente, podrías permitir desbloquear proactivamente aquí si no hay solicitud
+                // pero eso complicaría el estado levelWordsRequestedFor. Por ahora, solo aprobamos si hay solicitud.
                 return@launch
             }
 
+            // El profesor aprueba el contenido para el nivel actual del alumno (que es studentUser.currentLevel)
+            // Este es el nivel para el cual el alumno solicitó, y es el nivel que estamos aprobando.
+            val levelToApproveContentFor = studentUser.currentLevel
+
             try {
-                val result = firestoreRepository.updateUserWordRequestStatus(targetUserId, false) // targetUserId es el del alumno
+                // Usar la nueva función del repositorio
+                val result = firestoreRepository.approveWordRequestAndSetContentLevel(targetUserId, levelToApproveContentFor)
                 if (result.isSuccess) {
                     _approveWordRequestOutcome.value = Result.Success(Unit)
-                    _userProfile.value = studentUser.copy(hasPendingWordRequest = false)
-                    // La lógica de _canRequestWords en loadUserProfile se recalculará si se refresca el perfil,
-                    // y correctamente resultará en false porque studentUser.currentLevel NO SERÁ > studentUser.levelWordsRequestedFor.
-                    _errorMessage.value = "Solicitud de palabras aprobada para ${studentUser.fullName}."
+                    // Actualizar el perfil local para reflejar los cambios
+                    _userProfile.value = studentUser.copy(
+                        hasPendingWordRequest = false,
+                        maxContentLevelApproved = levelToApproveContentFor
+                    )
+                    // La lógica de _canRequestWords se reevaluará debido al cambio en _userProfile,
+                    // y debería seguir siendo false porque studentUser.currentLevel no será > studentUser.levelWordsRequestedFor.
+                    _errorMessage.value = "Contenido para Nivel $levelToApproveContentFor aprobado para ${studentUser.fullName}."
                 } else {
-                    _errorMessage.value = "Error al aprobar la solicitud: ${result.exceptionOrNull()?.message}"
-                    _approveWordRequestOutcome.value = Result.Failure(result.exceptionOrNull() ?: Exception("Error desconocido al aprobar solicitud"))
+                    _errorMessage.value = "Error al aprobar la solicitud y establecer nivel de contenido: ${result.exceptionOrNull()?.message}"
+                    _approveWordRequestOutcome.value = Result.Failure(result.exceptionOrNull() ?: Exception("Error desconocido al aprobar"))
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Excepción al aprobar solicitud: ${e.message}"

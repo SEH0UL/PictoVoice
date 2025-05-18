@@ -204,7 +204,25 @@ class HomeActivity : AppCompatActivity() {
 
         viewModel.currentUser.observe(this) { user ->
             user?.let {
-                Log.d("HomeActivity", "Current user data updated: ${it.fullName}, Level: ${it.currentLevel}")
+                Log.d("HomeActivity", "Current user data updated in UI: ${it.fullName}, Level: ${it.currentLevel}")
+                // Aquí podrías actualizar cualquier UI que muestre directamente el nivel/nombre del usuario
+                // Por ejemplo: binding.tvUserLevelDisplay.text = "Nivel: ${it.currentLevel}"
+            }
+        }
+
+        viewModel.levelUpEvent.observe(this) { newLevel ->
+            newLevel?.let {
+                // Mostrar AlertDialog
+                AlertDialog.Builder(this)
+                    .setTitle("¡Has subido de Nivel!")
+                    .setMessage("¡Felicidades! Has alcanzado el Nivel $it.")
+                    .setPositiveButton("¡Genial!") { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    .setOnDismissListener {
+                        viewModel.levelUpNotificationShown() // Informar al ViewModel que la notificación se mostró
+                    }
+                    .show()
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.example.pictovoice.ui.classroom // Asegúrate que el paquete sea correcto, el tuyo era ui.classroom
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -23,6 +24,7 @@ import com.example.pictovoice.R
 import com.example.pictovoice.adapters.AvailableStudentSearchAdapter
 import com.example.pictovoice.adapters.ClassStudentListAdapter
 import com.example.pictovoice.databinding.ActivityClassDetailBinding
+import com.example.pictovoice.ui.userprofile.UserProfileActivity
 import com.example.pictovoice.utils.ClassDetailViewModelFactory
 // ClassDetailResult debería estar en el mismo paquete que ClassDetailViewModel o importado correctamente
 
@@ -81,9 +83,19 @@ class ClassDetailActivity : AppCompatActivity() {
             onRemoveStudentClick = { student ->
                 showRemoveStudentConfirmationDialog(student)
             },
-            onStudentClick = { student ->
-                // TODO: Navegar al perfil detallado del alumno seleccionado.
-                Toast.makeText(this, "Ver perfil de: ${student.fullName}", Toast.LENGTH_SHORT).show()
+            onStudentClick = { student -> // student es el objeto User en el que se hizo clic
+                Log.d("ClassDetailActivity", "Navegando al perfil del alumno: ${student.fullName} (ID: ${student.userId})")
+                val intent = Intent(this, UserProfileActivity::class.java).apply {
+                    // Pasamos el ID del alumno cuyo perfil queremos ver.
+                    // UserProfileActivity usará este ID para cargar los datos del alumno.
+                    putExtra("USER_ID_EXTRA", student.userId)
+
+                    // No es estrictamente necesario pasar el VIEWER_ROLE como "teacher" aquí,
+                    // ya que UserProfileActivity determina el rol del visualizador
+                    // a partir del usuario actualmente autenticado con FirebaseAuth.
+                    // Si el profesor está logueado, UserProfileActivity lo identificará correctamente.
+                }
+                startActivity(intent)
             }
         )
         binding.rvStudentsInClass.apply {

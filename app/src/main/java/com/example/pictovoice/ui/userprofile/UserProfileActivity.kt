@@ -4,25 +4,28 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewModelScope // Necesario para viewModel.viewModelScope.launch
 import com.example.pictovoice.Data.repository.FirestoreRepository
 import com.example.pictovoice.R
-import com.example.pictovoice.databinding.ActivityUserProfileBinding // Asegúrate que es el nombre correcto de tu binding
+import com.example.pictovoice.databinding.ActivityUserProfileBinding
 import com.example.pictovoice.viewmodels.UserProfileViewModel
 import com.example.pictovoice.viewmodels.UserProfileViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+// Asegúrate de que esta importación esté presente y correcta:
+import com.example.pictovoice.utils.Result // <--- IMPORTACIÓN NECESARIA
 
 class UserProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityUserProfileBinding
     private var targetUserId: String? = null
-    private var viewerUserId: String? = null // El UID del usuario que está viendo el perfil
-    private var viewerRole: String? = null   // El rol del usuario que está viendo el perfil ("student" o "teacher")
+    private var viewerUserId: String? = null
+    private var viewerRole: String? = null
 
-    private val firestoreRepository = FirestoreRepository() // Considera inyección de dependencias
+    private val firestoreRepository = FirestoreRepository()
 
     private val viewModel: UserProfileViewModel by viewModels {
         UserProfileViewModelFactory(targetUserId ?: "", firestoreRepository)
@@ -40,10 +43,7 @@ class UserProfileActivity : AppCompatActivity() {
         }
 
         targetUserId = intent.getStringExtra("USER_ID_EXTRA")
-        // Para determinar quién está viendo, podrías pasar el rol del visualizador
-        // o determinarlo aquí basado en el usuario actualmente autenticado.
         viewerUserId = FirebaseAuth.getInstance().currentUser?.uid
-        // viewerRole = intent.getStringExtra("VIEWER_ROLE_EXTRA") // O cárgalo desde Firestore si es necesario
 
         if (targetUserId.isNullOrEmpty()) {
             Toast.makeText(this, "ID de usuario del perfil no encontrado.", Toast.LENGTH_LONG).show()
@@ -52,18 +52,20 @@ class UserProfileActivity : AppCompatActivity() {
         }
         if (viewerUserId.isNullOrEmpty()){
             Toast.makeText(this, "No se pudo identificar al observador del perfil.", Toast.LENGTH_LONG).show()
-            // Podrías redirigir a login o manejarlo de otra forma
             finish()
             return
         }
 
         // Cargar el rol del visualizador si no se pasó por intent
-        // (Esto es un ejemplo, idealmente ya tendrías esta info)
         if (viewerRole == null && viewerUserId != null) {
-            viewModel.viewModelScope.launch { // Usar el scope del ViewModel o crear uno nuevo
-                val result = firestoreRepository.getUser(viewerUserId!!)
-                if (result.isSuccess) {
-                    viewerRole = result.getOrNull()?.role
+            // Usar viewModelScope si la corrutina está relacionada con el ciclo de vida del ViewModel,
+            // o lifecycleScope para el ciclo de vida de la Activity.
+            // Aquí, como es una operación de inicialización de la Activity, lifecycleScope podría ser más apropiado,
+            // o mantenerlo en viewModel.viewModelScope ya que actualiza una variable usada en setupUI.
+            viewModel.viewModelScope.launch { // o lifecycleScope.launch
+                val userResult = firestoreRepository.getUser(viewerUserId!!) // Esto devuelve kotlin.Result
+                if (userResult.isSuccess) { // kotlin.Result SÍ tiene .isSuccess
+                    viewerRole = userResult.getOrNull()?.role
                     setupUIBasedOnRoleAndProfile()
                 } else {
                     Toast.makeText(this@UserProfileActivity, "Error al obtener rol del observador.", Toast.LENGTH_SHORT).show()
@@ -74,33 +76,24 @@ class UserProfileActivity : AppCompatActivity() {
             setupUIBasedOnRoleAndProfile()
         }
 
-
+        setupClickListeners()
         setupObservers()
-
-        binding.btnSolicitarPalabras.setOnClickListener {
-            viewModel.requestWords()
-        }
-        // Añade aquí los listeners para btnDesbloquearPalabrasProfesor y btnGenerarInformeProfesor si es necesario
-        // Ejemplo:
-         binding.btnDesbloquearPalabrasProfesor.setOnClickListener { /* Lógica profesor */ }
-         binding.btnGenerarInformeProfesor.setOnClickListener { /* Lógica profesor */ }
     }
 
     private fun setupUIBasedOnRoleAndProfile() {
         val isViewingOwnProfileAsStudent = targetUserId == viewerUserId && viewerRole == "student"
-        val isTeacherViewingStudentProfile = viewerRole == "teacher" // Y targetUser es un alumno
+        val isTeacherViewingStudentProfile = viewerRole == "teacher"
 
         if (isViewingOwnProfileAsStudent) {
             binding.tvProfileTitle.text = "Tu Perfil"
-            // El botón btnSolicitarPalabras será gestionado por LiveData 'canRequestWords'
             binding.btnDesbloquearPalabrasProfesor.visibility = View.GONE
             binding.btnGenerarInformeProfesor.visibility = View.GONE
+            // La visibilidad de btnSolicitarPalabras se maneja en el observer de canRequestWords
         } else if (isTeacherViewingStudentProfile) {
-            // El nombre del alumno se cargará en el observer de userProfile
             binding.tvProfileTitle.text = "Perfil del Alumno" // Se actualizará con el nombre
             binding.btnSolicitarPalabras.visibility = View.GONE
-            binding.btnDesbloquearPalabrasProfesor.visibility = View.VISIBLE // Lógica de habilitación/texto pendiente
-            binding.btnGenerarInformeProfesor.visibility = View.VISIBLE // Lógica pendiente
+            binding.btnDesbloquearPalabrasProfesor.visibility = View.VISIBLE
+            binding.btnGenerarInformeProfesor.visibility = View.VISIBLE
         } else {
             // Otro caso (ej. profesor viendo su propio perfil, o alumno viendo perfil de otro alumno - si se permite)
             binding.tvProfileTitle.text = "Perfil"
@@ -110,16 +103,34 @@ class UserProfileActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupClickListeners() {
+        binding.btnSolicitarPalabras.setOnClickListener {
+            viewModel.requestWords()
+        }
+
+        binding.btnDesbloquearPalabrasProfesor.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Aprobar Solicitud")
+                .setMessage("¿Estás seguro de que quieres aprobar la solicitud de palabras para este alumno?")
+                .setPositiveButton("Sí, Aprobar") { dialog, _ ->
+                    viewModel.approveWordRequest()
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Cancelar", null)
+                .show()
+        }
+
+        binding.btnGenerarInformeProfesor.setOnClickListener {
+            Toast.makeText(this, "Funcionalidad 'Generar Informe' pendiente.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun setupObservers() {
         viewModel.isLoading.observe(this, Observer { isLoading ->
-            // Podrías tener un ProgressBar general, o deshabilitar botones mientras carga
-            if (isLoading) {
-                // Ejemplo: binding.btnSolicitarPalabras.isEnabled = false
-            } else {
-                // Ejemplo: binding.btnSolicitarPalabras.isEnabled = true (si aplica)
-            }
-            // Si tuvieras un ProgressBar global en el XML:
-            // binding.someGlobalProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.btnSolicitarPalabras.isEnabled = !isLoading
+            binding.btnDesbloquearPalabrasProfesor.isEnabled = !isLoading
+            // Ejemplo si tuvieras un ProgressBar general:
+            // binding.progressBarUserProfileActivity.visibility = if(isLoading) View.VISIBLE else View.GONE
         })
 
         viewModel.errorMessage.observe(this, Observer { errorMessage ->
@@ -133,13 +144,12 @@ class UserProfileActivity : AppCompatActivity() {
             user?.let {
                 binding.tvUserProfileName.text = it.fullName
                 binding.tvLevelStart.text = it.currentLevel.toString()
-                binding.tvLevelEnd.text = (it.currentLevel + 1).toString() // Nivel siguiente
+                binding.tvLevelEnd.text = (it.currentLevel + 1).toString()
 
-                val expNeededForNextLevel = it.currentLevel * 1000 // Asumiendo 1000 EXP por nivel
+                val expNeededForNextLevel = it.currentLevel * 1000
                 binding.progressBarLevel.max = expNeededForNextLevel
                 binding.progressBarLevel.progress = it.currentExp
 
-                // Actualizar el título del Toolbar o el tvProfileTitle si es un profesor viendo el perfil
                 if (viewerRole == "teacher" && targetUserId != viewerUserId) {
                     supportActionBar?.title = "Perfil de ${it.fullName}"
                     binding.tvProfileTitle.text = "Perfil de ${it.fullName}"
@@ -148,16 +158,20 @@ class UserProfileActivity : AppCompatActivity() {
                     binding.tvProfileTitle.text = "Mi Perfil"
                 }
 
+                binding.tvPalabrasUsadasCount.text = "0"
+                binding.tvPalabrasNuevasCount.text = "0"
+                binding.tvPalabrasDesbloqueadasCount.text = "0"
+                binding.tvPalabrasBloqueadasCount.text = "0"
 
-                // Placeholder para estadísticas (deberás implementarlo cuando tengas la lógica)
-                binding.tvPalabrasUsadasCount.text = "0" // Placeholder
-                binding.tvPalabrasNuevasCount.text = "0" // Placeholder
-                binding.tvPalabrasDesbloqueadasCount.text = "0" // Placeholder
-                binding.tvPalabrasBloqueadasCount.text = "0" // Placeholder
-
-                // Lógica para el texto del botón del profesor "Desbloquear Palabras"
                 if (viewerRole == "teacher"){
-                    binding.btnDesbloquearPalabrasProfesor.text = "Desbloquear Palabras (Nivel ${it.currentLevel})"
+                    val isLoadingValue = viewModel.isLoading.value ?: false
+                    if (it.hasPendingWordRequest) {
+                        binding.btnDesbloquearPalabrasProfesor.text = "Aprobar Solicitud (Nivel ${it.currentLevel})"
+                        binding.btnDesbloquearPalabrasProfesor.isEnabled = !isLoadingValue
+                    } else {
+                        binding.btnDesbloquearPalabrasProfesor.text = "Palabras Aprobadas (Nivel ${it.currentLevel})"
+                        binding.btnDesbloquearPalabrasProfesor.isEnabled = false
+                    }
                 }
             }
         })
@@ -166,7 +180,8 @@ class UserProfileActivity : AppCompatActivity() {
             val isViewingOwnProfileAsStudent = targetUserId == viewerUserId && viewerRole == "student"
             if (isViewingOwnProfileAsStudent) {
                 binding.btnSolicitarPalabras.visibility = if (canRequest) View.VISIBLE else View.GONE
-                binding.btnSolicitarPalabras.isEnabled = canRequest
+                val isLoadingValue = viewModel.isLoading.value ?: false
+                binding.btnSolicitarPalabras.isEnabled = canRequest && !isLoadingValue
                 if (canRequest) {
                     binding.btnSolicitarPalabras.text = "Solicitar Palabras (Nivel ${viewModel.userProfile.value?.currentLevel ?: ""})"
                 }
@@ -175,17 +190,20 @@ class UserProfileActivity : AppCompatActivity() {
             }
         })
 
-        viewModel.wordRequestOutcome.observe(this, Observer { result ->
-            result?.let {
-                if (it.isSuccess) {
+        viewModel.wordRequestOutcome.observe(this, Observer { resultOutcome -> // Renombrado 'result' a 'resultOutcome'
+            resultOutcome?.let { outcome ->
+                if (outcome is Result.Success) { // Ahora esto usa tu clase com.example.pictovoice.utils.Result.Success
                     Toast.makeText(this, "Solicitud de palabras enviada.", Toast.LENGTH_SHORT).show()
-                } else {
-                    // El mensaje de error ya se muestra a través de viewModel.errorMessage
-                    // Pero si quieres un Toast específico aquí para este outcome:
-                    // val errorMsg = (it as? com.example.pictovoice.utils.Result.Failure)?.message ?: "No se pudo enviar la solicitud."
-                    // Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
                 }
                 viewModel.clearWordRequestOutcome()
+            }
+        })
+
+        viewModel.approveWordRequestOutcome.observe(this, Observer { resultOutcome -> // Renombrado 'result' a 'resultOutcome'
+            resultOutcome?.let { outcome ->
+                // if (outcome is Result.Success) { // Ya gestionado por _errorMessage en ViewModel
+                // }
+                viewModel.clearApproveWordRequestOutcome()
             }
         })
     }

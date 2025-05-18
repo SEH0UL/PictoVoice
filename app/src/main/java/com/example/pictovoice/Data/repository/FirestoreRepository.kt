@@ -7,6 +7,7 @@ import com.example.pictovoice.Data.Model.Pictogram
 import com.example.pictovoice.Data.Model.User
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -62,15 +63,34 @@ class FirestoreRepository {
     suspend fun getUser(userId: String): kotlin.Result<User?> = withContext(Dispatchers.IO) {
         try {
             val snapshot = usersCollection.document(userId).get().await()
-            if (snapshot.exists()) {
-                kotlin.Result.success(User.fromSnapshot(snapshot))
-            } else {
-                Log.w("FirestoreRepo", "Usuario no encontrado con ID: $userId")
-                kotlin.Result.success(null)
-            }
+            kotlin.Result.success(User.fromSnapshot(snapshot))
         } catch (e: Exception) {
             Log.e("FirestoreRepo", "Error obteniendo usuario $userId", e)
             kotlin.Result.failure(e)
+        }
+    }
+
+    // NUEVA FUNCIÓN PARA ESCUCHAR CAMBIOS EN EL DOCUMENTO DEL USUARIO
+    fun addUserDocumentListener(
+        userId: String,
+        onUpdate: (User?) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerRegistration {
+        val userDocRef = usersCollection.document(userId)
+        return userDocRef.addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                Log.w("FirestoreRepo", "Listen failed for user $userId.", e)
+                onError(e)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                Log.d("FirestoreRepo", "User document update received for $userId")
+                onUpdate(User.fromSnapshot(snapshot))
+            } else {
+                Log.d("FirestoreRepo", "Current data: null for user $userId (document might have been deleted)")
+                onUpdate(null) // O manejar como un error específico si el documento no debería ser nulo
+            }
         }
     }
 
@@ -309,9 +329,9 @@ class FirestoreRepository {
                 var newLevel = currentLevel
                 val initialLevelBeforeLoop = currentLevel
 
-                var expNeededForNextLevel = newLevel * 1000 // Asumiendo 1000 EXP por nivel.
+                var expNeededForNextLevel = newLevel * 1000
 
-                while (newCurrentExp >= expNeededForNextLevel && newLevel < 100) { // Límite de nivel 100
+                while (newCurrentExp >= expNeededForNextLevel && newLevel < 100) {
                     newCurrentExp -= expNeededForNextLevel
                     newLevel++
                     expNeededForNextLevel = newLevel * 1000

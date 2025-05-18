@@ -51,8 +51,9 @@ class HomeActivity : AppCompatActivity() {
         observeViewModel()
 
         firebaseAuth.currentUser?.uid?.let { userId ->
-            Log.d("HomeActivity", "Loading user data for UID: $userId")
-            viewModel.loadCurrentUserData(userId)
+            Log.d("HomeActivity", "Starting to load and listen to user data for UID: $userId")
+            // CAMBIO AQUÍ: Llama a la nueva función que configura el listener
+            viewModel.loadAndListenToUserData(userId)
         }
     }
 
@@ -150,9 +151,10 @@ class HomeActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         Log.d("HomeActivity", "Observing ViewModel LiveData")
+
         viewModel.phrasePictograms.observe(this) { pictograms ->
             Log.d("HomeActivity", "Phrase pictograms updated: ${pictograms?.size ?: 0} items")
-            phraseAdapter.submitList(pictograms?.toList())
+            phraseAdapter.submitList(pictograms?.toList()) // Convertir a List si es necesario
             if (pictograms?.isNotEmpty() == true) {
                 binding.rvPhrasePictograms.smoothScrollToPosition(pictograms.size - 1)
             }
@@ -165,17 +167,17 @@ class HomeActivity : AppCompatActivity() {
 
         viewModel.pronounPictograms.observe(this) { pictograms ->
             Log.d("HomeActivity", "Pronoun pictograms updated: ${pictograms?.size ?: 0} items")
-            pronounsAdapter.submitList(pictograms?.toList())
+            pronounsAdapter.submitList(pictograms)
         }
 
         viewModel.fixedVerbPictograms.observe(this) { pictograms ->
             Log.d("HomeActivity", "Fixed verb pictograms updated: ${pictograms?.size ?: 0} items")
-            fixedVerbsAdapter.submitList(pictograms?.toList())
+            fixedVerbsAdapter.submitList(pictograms)
         }
 
         viewModel.dynamicPictograms.observe(this) { pictograms ->
             Log.d("HomeActivity", "Dynamic pictograms updated: ${pictograms?.size ?: 0} items. Category: ${viewModel.currentDynamicCategoryName.value}")
-            dynamicPictogramsAdapter.submitList(pictograms?.toList())
+            dynamicPictogramsAdapter.submitList(pictograms)
         }
 
         viewModel.currentDynamicCategoryName.observe(this) { categoryName ->
@@ -185,34 +187,34 @@ class HomeActivity : AppCompatActivity() {
 
         viewModel.availableCategories.observe(this) { categories ->
             Log.d("HomeActivity", "Available categories updated: ${categories?.size ?: 0} items")
-            categoryAdapter.submitList(categories?.toList())
+            categoryAdapter.submitList(categories)
         }
 
         viewModel.isLoading.observe(this) { isLoading ->
             Log.d("HomeActivity", "isLoading state changed: $isLoading")
-            if(isLoading) {
-                // Toast.makeText(this, "Cargando...", Toast.LENGTH_SHORT).show()
-            }
+            // Aquí podrías manejar un ProgressBar general para la actividad si lo deseas
+            // binding.activityHomeProgressBar.visibility = if(isLoading) View.VISIBLE else View.GONE
         }
 
         viewModel.errorMessage.observe(this) { errorMessage ->
             errorMessage?.let {
                 Log.e("HomeActivity", "Error message received: $it")
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+                // Considera llamar a una función en el ViewModel para limpiar el mensaje después de mostrarlo
+                // viewModel.clearErrorMessage()
             }
         }
 
         viewModel.currentUser.observe(this) { user ->
             user?.let {
-                Log.d("HomeActivity", "Current user data updated in UI: ${it.fullName}, Level: ${it.currentLevel}")
-                // Aquí podrías actualizar cualquier UI que muestre directamente el nivel/nombre del usuario
-                // Por ejemplo: binding.tvUserLevelDisplay.text = "Nivel: ${it.currentLevel}"
+                Log.d("HomeActivity", "Current user data updated in UI: ${it.fullName}, Level: ${it.currentLevel}, MaxApproved: ${it.maxContentLevelApproved}")
+                // Aquí puedes actualizar cualquier UI que muestre info del usuario si es necesario
             }
         }
 
         viewModel.levelUpEvent.observe(this) { newLevel ->
             newLevel?.let {
-                // Mostrar AlertDialog
+                Log.d("HomeActivity", "LevelUp event received for level $it")
                 AlertDialog.Builder(this)
                     .setTitle("¡Has subido de Nivel!")
                     .setMessage("¡Felicidades! Has alcanzado el Nivel $it.")
@@ -222,6 +224,7 @@ class HomeActivity : AppCompatActivity() {
                     .setOnDismissListener {
                         viewModel.levelUpNotificationShown() // Informar al ViewModel que la notificación se mostró
                     }
+                    .setCancelable(false) // Para que el usuario deba pulsar el botón
                     .show()
             }
         }

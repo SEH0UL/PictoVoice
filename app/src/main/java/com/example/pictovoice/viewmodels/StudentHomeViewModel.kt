@@ -12,6 +12,7 @@ import com.example.pictovoice.Data.Model.Pictogram
 import com.example.pictovoice.Data.Model.User
 import com.example.pictovoice.Data.repository.FirestoreRepository
 import com.example.pictovoice.R // Importante para acceder a los recursos locales
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 // No necesitas java.util.Locale aquí a menos que lo uses para algo específico
 
@@ -78,46 +79,82 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
     private var mediaPlayer: MediaPlayer? = null
     private var audioQueue: MutableList<Int> = mutableListOf()
 
-    private var previousUserLevel: Int? = null // Para rastrear el nivel anterior
+    private var previousUserLevelForNotification: Int? = null // Para rastrear el nivel anterior
     private val _levelUpEvent = MutableLiveData<Int?>(null) // Contendrá el nuevo nivel alcanzado, o null si no hay evento
     val levelUpEvent: LiveData<Int?> = _levelUpEvent
 
+    private var userDocumentListener: ListenerRegistration? = null // Para manejar el listener
+
     init {
-        Log.d("StudentHomeVM", "ViewModel created. Initializing local data.")
+        Log.d("StudentHomeVM", "ViewModel created.")
         allDefinedDynamicCategories = createLocalDynamicCategories()
         allLocalPictograms = createLocalPictograms()
-        refreshUiBasedOnCurrentUser()
+        // La carga/escucha del usuario se iniciará cuando se llame a loadAndListenToUserData
+    }
+
+    // Esta función reemplaza a loadCurrentUserData y configura el listener
+    fun loadAndListenToUserData(userId: String) {
+        if (userId.isBlank()) {
+            _errorMessage.value = "ID de usuario no válido para escuchar."
+            return
+        }
+        _isLoading.value = true
+        // Detener cualquier listener anterior si el userId cambia (poco probable en este VM, pero buena práctica)
+        userDocumentListener?.remove()
+
+        userDocumentListener = firestoreRepository.addUserDocumentListener(
+            userId,
+            onUpdate = { updatedUser ->
+                _isLoading.value = false // Quitar el loading una vez que llega la primera data o actualización
+                val oldLevel = _currentUser.value?.currentLevel // Nivel antes de la actualización del listener
+
+                _currentUser.value = updatedUser // Actualiza el LiveData con el usuario más reciente
+
+                if (updatedUser != null) {
+                    Log.d("StudentHomeVM", "User data updated via listener. Level: ${updatedUser.currentLevel}, MaxApproved: ${updatedUser.maxContentLevelApproved}")
+
+                    // Lógica para la notificación de subida de nivel
+                    // Comparamos el nivel actual del usuario actualizado con el 'previousUserLevelForNotification'
+                    // previousUserLevelForNotification se establece la primera vez o después de una notificación.
+                    if (previousUserLevelForNotification == null && updatedUser.currentLevel >= 1) {
+                        previousUserLevelForNotification = updatedUser.currentLevel
+                    } else if (previousUserLevelForNotification != null && updatedUser.currentLevel > previousUserLevelForNotification!!) {
+                        Log.d("StudentHomeVM", "Level UP DETECTED via listener! From $previousUserLevelForNotification to ${updatedUser.currentLevel}. Posting event.")
+                        _levelUpEvent.value = updatedUser.currentLevel
+                        previousUserLevelForNotification = updatedUser.currentLevel // Actualizar para la próxima subida
+                    }
+                }
+                refreshUiBasedOnCurrentUser() // Refresca la UI con los datos actualizados
+            },
+            onError = { exception ->
+                _isLoading.value = false
+                _errorMessage.value = "Error escuchando datos del usuario: ${exception.message}"
+                Log.e("StudentHomeVM", "Error listener user data", exception)
+                _currentUser.value = null // Opcional: limpiar si hay error
+                refreshUiBasedOnCurrentUser()
+            }
+        )
     }
 
     private fun refreshUiBasedOnCurrentUser() {
-        _isLoading.value = true
+        // _isLoading.value = true; // isLoading se maneja ahora en loadAndListenToUserData
         val user = _currentUser.value
-        // **CAMBIO IMPORTANTE AQUÍ:** Usamos maxContentLevelApproved para determinar el acceso al contenido.
-        // Si el usuario es null o maxContentLevelApproved es 0 (o no está puesto), default a 1 (Nivel 1 accesible).
         val contentAccessLevel = if (user != null && user.maxContentLevelApproved > 0) user.maxContentLevelApproved else 1
-
         val userUnlockedCategoryIds = user?.unlockedCategories ?: listOf(CATEGORY_ID_COMIDA)
 
         Log.d("StudentHomeVM", "refreshUi: User ActualLvl: ${user?.currentLevel}, ContentAccessLvl: $contentAccessLevel, UnlockedFolders: $userUnlockedCategoryIds")
 
-
-        // 1. Actualizar categorías disponibles (carpetas) - La visibilidad de la CARPETA sigue dependiendo de unlockedCategories
         _availableCategories.value = allDefinedDynamicCategories.filter { category ->
             userUnlockedCategoryIds.contains(category.categoryId)
-            // Aquí podríamos añadir en el futuro: && (category.requiresLevel <= contentAccessLevel) si las categorías en sí mismas tuvieran un nivel requerido para ser "visibles con contenido".
-            // Por ahora, si la carpeta está en unlockedCategories, se muestra. Su contenido se filtrará.
         }.sortedBy { it.displayOrder }
-        Log.d("StudentHomeVM", "Filtered available folders: ${_availableCategories.value?.map { it.name }}")
 
-        // 2. Actualizar pictogramas fijos (pronombres y verbos) usando contentAccessLevel
         _pronounPictograms.value = allLocalPictograms.filter {
-            it.category == PRONOUNS_CATEGORY_ID && it.levelRequired <= contentAccessLevel // CAMBIO: usa contentAccessLevel
+            it.category == PRONOUNS_CATEGORY_ID && it.levelRequired <= contentAccessLevel
         }
         _fixedVerbPictograms.value = allLocalPictograms.filter {
-            it.category == FIXED_VERBS_CATEGORY_ID && it.levelRequired <= contentAccessLevel // CAMBIO: usa contentAccessLevel
+            it.category == FIXED_VERBS_CATEGORY_ID && it.levelRequired <= contentAccessLevel
         }
 
-        // 3. Determinar y cargar la categoría dinámica inicial/actual
         var categoryToLoad: Category? = null
         val availableDynamicCats = _availableCategories.value
         if (!availableDynamicCats.isNullOrEmpty()) {
@@ -125,51 +162,17 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
             if (!currentName.isNullOrBlank()) {
                 categoryToLoad = availableDynamicCats.find { it.name == currentName }
             }
-            if (categoryToLoad == null) {
-                categoryToLoad = availableDynamicCats.find { it.categoryId == CATEGORY_ID_COMIDA }
-            }
-            if (categoryToLoad == null) {
-                categoryToLoad = availableDynamicCats.first()
-            }
+            if (categoryToLoad == null) { categoryToLoad = availableDynamicCats.find { it.categoryId == CATEGORY_ID_COMIDA } }
+            if (categoryToLoad == null) { categoryToLoad = availableDynamicCats.first() }
         }
 
         if (categoryToLoad != null) {
-            // **CAMBIO IMPORTANTE AQUÍ:** Pasamos contentAccessLevel a la función
             loadDynamicPictogramsByLocalCategory(categoryToLoad, contentAccessLevel)
         } else {
             _dynamicPictograms.value = emptyList()
             _currentDynamicCategoryName.value = "No hay categorías desbloqueadas"
-            Log.w("StudentHomeVM", "No dynamic categories available or unlocked for display.")
         }
-        _isLoading.value = false
-    }
-
-    fun loadCurrentUserData(userId: String) {
-        _isLoading.value = true
-        viewModelScope.launch {
-            try {
-                val userResult = firestoreRepository.getUser(userId)
-                if (userResult.isSuccess) {
-                    val loadedUser = userResult.getOrNull()
-                    if (_currentUser.value == null && loadedUser != null) {
-                        previousUserLevel = loadedUser.currentLevel
-                    }
-                    _currentUser.value = loadedUser // Actualiza el usuario completo
-                    Log.d("StudentHomeVM", "User data loaded. ActualLvl: ${currentUser.value?.currentLevel}, MaxApprovedLvl: ${currentUser.value?.maxContentLevelApproved}, UnlockedFolders: ${currentUser.value?.unlockedCategories}")
-                    refreshUiBasedOnCurrentUser() // Esta función ahora usará el maxContentLevelApproved del usuario actualizado
-                } else {
-                    _errorMessage.value = "Error al cargar datos del usuario: ${userResult.exceptionOrNull()?.message}"
-                    _currentUser.value = null
-                    refreshUiBasedOnCurrentUser()
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Excepción al cargar datos del usuario: ${e.message}"
-                _currentUser.value = null
-                refreshUiBasedOnCurrentUser()
-            } finally {
-                _isLoading.value = false
-            }
-        }
+        // _isLoading.value = false; // isLoading se maneja ahora en loadAndListenToUserData
     }
 
     // Esta función ahora solo define las categorías DINÁMICAS que pueden aparecer como carpetas
@@ -322,9 +325,9 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
 
     fun loadDynamicPictogramsByLocalCategory(
         category: Category,
-        contentAccessLevelForFiltering: Int = _currentUser.value?.maxContentLevelApproved ?: 1 // VALOR POR DEFECTO AQUÍ
+        contentAccessLevelForFiltering: Int = _currentUser.value?.maxContentLevelApproved ?: 1 // <-- ESTE VALOR POR DEFECTO ES CRUCIAL
     ) {
-        _isLoading.value = true
+        _isLoading.value = true // Es mejor manejar isLoading al inicio y fin de la función si es una op. costosa
         _currentDynamicCategoryName.value = category.name
         Log.d("StudentHomeVM", "Loading dynamic pictos for category: ${category.name} (ID: ${category.categoryId}), using contentAccessLevel: $contentAccessLevelForFiltering")
 
@@ -333,7 +336,7 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
         }
         _dynamicPictograms.value = filteredPictos
         Log.d("StudentHomeVM", "Found ${filteredPictos.size} pictos for ${category.name} using access level $contentAccessLevelForFiltering")
-        _isLoading.value = false
+        _isLoading.value = false // Finalizar isLoading
     }
 
     fun addPictogramToPhrase(pictogram: Pictogram) {
@@ -346,30 +349,20 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
             val student = _currentUser.value
             val userId = student?.userId
             if (userId != null && userId.isNotBlank() && pictogram.baseExp > 0) {
-                val levelBeforeAddingExp = student.currentLevel // Nivel ANTES de añadir EXP
+                // No necesitamos guardar 'levelBeforeAddingExp' aquí para el evento _levelUpEvent,
+                // porque el listener del documento del usuario se encargará de detectar el cambio de nivel.
+                // 'previousUserLevelForNotification' se usa en el callback del listener.
                 viewModelScope.launch {
                     Log.d("StudentHomeVM", "Adding ${pictogram.baseExp} EXP to user $userId for pictogram ${pictogram.name}")
+                    // addExperienceToStudent actualiza Firestore. El listener detectará el cambio.
                     val expResult = firestoreRepository.addExperienceToStudent(userId, pictogram.baseExp)
                     if (expResult.isSuccess) {
-                        val (newCurrentExp, newLevelAfterExp) = expResult.getOrThrow()
-                        var updatedStudent = student.copy( // Copia inicial con nueva exp y nivel
-                            currentExp = newCurrentExp,
-                            currentLevel = newLevelAfterExp
-                        )
-                        if (newLevelAfterExp > levelBeforeAddingExp) {
-                            Log.d("StudentHomeVM", "Level UP! From $levelBeforeAddingExp to $newLevelAfterExp. Posting event & fetching updated user.")
-                            _levelUpEvent.value = newLevelAfterExp // Notificar a la UI
-                            // Re-leer el usuario para obtener 'unlockedCategories' y 'maxContentLevelApproved' actualizados de Firestore
-                            val freshUserResult = firestoreRepository.getUser(userId)
-                            if (freshUserResult.isSuccess) {
-                                updatedStudent = freshUserResult.getOrNull() ?: updatedStudent
-                            }
-                        }
-                        _currentUser.value = updatedStudent // Actualizar LiveData con el usuario (potencialmente) más fresco
-                        refreshUiBasedOnCurrentUser() // Refrescar toda la UI, incluyendo visibilidad de pictogramas y categorías
+                        // El _currentUser se actualizará a través del listener de Firestore.
+                        // La llamada a refreshUiBasedOnCurrentUser() también ocurrirá en el callback del listener.
+                        // El evento _levelUpEvent también se disparará desde el callback del listener.
+                        Log.d("StudentHomeVM", "EXP added. Listener will handle user update and UI refresh.")
                     } else {
                         _errorMessage.value = expResult.exceptionOrNull()?.message ?: "Error al añadir experiencia."
-                        Log.e("StudentHomeVM", "Failed to add experience: ${expResult.exceptionOrNull()?.message}")
                     }
                 }
             }

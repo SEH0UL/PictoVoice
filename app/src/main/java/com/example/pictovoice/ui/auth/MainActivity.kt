@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
         // Comprobar si el usuario ya está logueado
         if (authRepository.isUserLoggedIn()) {
             Log.d("MainActivity", "Usuario previamente logueado. Intentando restaurar sesión...")
-            authRepository.logout() // ¡COMENTA O ELIMINA ESTA LÍNEA!
+            // authRepository.logout() // ¡COMENTA O ELIMINA ESTA LÍNEA!
 
             // Ahora, en lugar de desloguear, vamos a cargar los datos del usuario
             // y redirigir a la pantalla correspondiente.

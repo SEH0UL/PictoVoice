@@ -1,5 +1,6 @@
 package com.example.pictovoice.adapters // Asegúrate que el package es correcto
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -31,21 +32,14 @@ class CategoryAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(category: Category, onCategoryClick: (Category) -> Unit) {
-            // Asegúrate que en tu res/layout/item_category_folder.xml existe un Button o TextView
-            // con android:id="@+id/btnCategoryFolder"
             binding.btnCategoryFolder.text = category.name
 
-            // Si las categorías tuvieran iconos locales o URL:
-            // if (category.iconResourceId != 0) {
-            //    binding.ivCategoryIcon.setImageResource(category.iconResourceId) // Necesitarías un ImageView ivCategoryIcon
-            // } else if (category.iconUrl != null) {
-            //     Glide.with(binding.ivCategoryIcon.context)
-            //         .load(category.iconUrl)
-            //         .into(binding.ivCategoryIcon)
-            // }
+            // Comenta o elimina el listener en binding.root si lo tenías así:
+            // binding.root.setOnClickListener { /* ... */ }
 
-            // El click listener puede ser en el root del item o en el botón específico
-            binding.root.setOnClickListener { // o binding.btnCategoryFolder.setOnClickListener
+            // Y prueba a poner el listener directamente en el botón:
+            binding.btnCategoryFolder.setOnClickListener {
+                Log.d("CategoryAdapter", "btnCategoryFolder clicked for: ${category.name}") // Nuevo log para verificar
                 onCategoryClick(category)
             }
         }

@@ -4,6 +4,9 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import android.util.Log
 
+// ID de la categoría inicial por defecto (debe coincidir con la constante en StudentHomeViewModel y FirestoreRepository)
+private const val INITIAL_DEFAULT_CATEGORY_ID = "local_comida"
+
 data class User(
     val userId: String = "",
     val username: String = "",
@@ -16,8 +19,8 @@ data class User(
     val currentLevel: Int = 1,
     val currentExp: Int = 0,
     val totalExp: Int = 0,
-    val unlockedCategories: List<String> = listOf("basico"),
-    val hasPendingWordRequest: Boolean = false // NUEVO CAMPO
+    val unlockedCategories: List<String> = listOf(INITIAL_DEFAULT_CATEGORY_ID), // Categoría inicial por defecto
+    val hasPendingWordRequest: Boolean = false
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
         "userId" to userId,
@@ -32,7 +35,7 @@ data class User(
         "currentExp" to currentExp,
         "totalExp" to totalExp,
         "unlockedCategories" to unlockedCategories,
-        "hasPendingWordRequest" to hasPendingWordRequest // AÑADIR AL MAPA
+        "hasPendingWordRequest" to hasPendingWordRequest
     )
 
     companion object {
@@ -51,8 +54,8 @@ data class User(
                     currentLevel = (data["currentLevel"] as? Long)?.toInt() ?: 1,
                     currentExp = (data["currentExp"] as? Long)?.toInt() ?: 0,
                     totalExp = (data["totalExp"] as? Long)?.toInt() ?: 0,
-                    unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf("basico"),
-                    hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false // LEER EL NUEVO CAMPO
+                    unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf(INITIAL_DEFAULT_CATEGORY_ID),
+                    hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false
                 )
             } catch (e: Exception) {
                 Log.e("User", "Error al convertir snapshot a User: ${e.message}", e)

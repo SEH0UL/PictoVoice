@@ -1,5 +1,7 @@
 package com.example.pictovoice.utils
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pictovoice.Data.Model.User
@@ -34,6 +36,12 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
     private val _registerResult = MutableStateFlow<AuthResult<String>>(AuthResult.Idle)
     val registerResult: StateFlow<AuthResult<String>> = _registerResult
 
+    // --- INICIO: Nuevo para Logout ---
+    private val _logoutEvent = MutableLiveData<Boolean>()
+    val logoutEvent: LiveData<Boolean>
+        get() = _logoutEvent
+    // --- FIN: Nuevo para Logout ---
+
     fun login(identifier: String, password: String) {
         _loginResult.value = AuthResult.Loading
         viewModelScope.launch {
@@ -67,4 +75,15 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
             }
         }
     }
+
+    // --- INICIO: Nueva función para Logout ---
+    fun logoutUser() {
+        authRepository.logout()
+        _logoutEvent.value = true // Notifica que el logout se ha realizado
+    }
+
+    fun onLogoutEventHandled() {
+        _logoutEvent.value = false // Resetea el evento después de ser manejado
+    }
+    // --- FIN: Nueva función para Logout ---
 }

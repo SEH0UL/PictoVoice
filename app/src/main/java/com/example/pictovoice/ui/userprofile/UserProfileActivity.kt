@@ -156,21 +156,22 @@ class UserProfileActivity : AppCompatActivity() {
             .show()
     }
     // --- FIN: Definición de la función que faltaba ---
-
     private fun setupObservers() {
-        userProfileViewModel.isLoading.observe(this, Observer { isLoading -> // Usar userProfileViewModel
+        userProfileViewModel.isLoading.observe(this, Observer { isLoading ->
             binding.btnSolicitarPalabras.isEnabled = !isLoading
             binding.btnDesbloquearPalabrasProfesor.isEnabled = !isLoading
+            // Si tienes un ProgressBar global, actualízalo aquí también:
+            // binding.progressBarUserProfile.visibility = if(isLoading) View.VISIBLE else View.GONE
         })
 
-        userProfileViewModel.errorMessage.observe(this, Observer { errorMessage -> // Usar userProfileViewModel
+        userProfileViewModel.errorMessage.observe(this, Observer { errorMessage ->
             errorMessage?.let {
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
-                userProfileViewModel.clearErrorMessage() // Usar userProfileViewModel
+                userProfileViewModel.clearErrorMessage()
             }
         })
 
-        userProfileViewModel.userProfile.observe(this, Observer { user -> // Usar userProfileViewModel
+        userProfileViewModel.userProfile.observe(this, Observer { user ->
             user?.let {
                 binding.tvUserProfileName.text = it.fullName
                 binding.tvLevelStart.text = it.currentLevel.toString()
@@ -188,13 +189,15 @@ class UserProfileActivity : AppCompatActivity() {
                     binding.tvProfileTitle.text = "Mi Perfil"
                 }
 
-                binding.tvPalabrasUsadasCount.text = "0"
-                binding.tvPalabrasNuevasCount.text = "0"
-                binding.tvPalabrasDesbloqueadasCount.text = "0"
-                binding.tvPalabrasBloqueadasCount.text = "0"
+                // !!! ELIMINAR ESTAS LÍNEAS DE AQUÍ !!!
+                // Las estadísticas ahora se actualizan mediante sus propios LiveData y observadores.
+                // binding.tvPalabrasUsadasCount.text = "0"
+                // binding.tvPalabrasNuevasCount.text = "0"
+                // binding.tvPalabrasDesbloqueadasCount.text = "0"
+                // binding.tvPalabrasBloqueadasCount.text = "0"
 
                 if (viewerRole == "teacher"){
-                    val isLoadingValue = userProfileViewModel.isLoading.value ?: false // Usar userProfileViewModel
+                    val isLoadingValue = userProfileViewModel.isLoading.value ?: false
                     if (it.hasPendingWordRequest) {
                         binding.btnDesbloquearPalabrasProfesor.text = "Aprobar Solicitud (Nivel ${it.currentLevel})"
                         binding.btnDesbloquearPalabrasProfesor.isEnabled = !isLoadingValue
@@ -206,43 +209,64 @@ class UserProfileActivity : AppCompatActivity() {
             }
         })
 
-        userProfileViewModel.canRequestWords.observe(this, Observer { canRequest -> // Usar userProfileViewModel
+        userProfileViewModel.canRequestWords.observe(this, Observer { canRequest ->
             val isViewingOwnProfileAsStudent = targetUserId == viewerUserId && viewerRole == "student"
             if (isViewingOwnProfileAsStudent) {
                 binding.btnSolicitarPalabras.visibility = if (canRequest) View.VISIBLE else View.GONE
-                val isLoadingValue = userProfileViewModel.isLoading.value ?: false // Usar userProfileViewModel
+                val isLoadingValue = userProfileViewModel.isLoading.value ?: false
                 binding.btnSolicitarPalabras.isEnabled = canRequest && !isLoadingValue
                 if (canRequest) {
-                    binding.btnSolicitarPalabras.text = "Solicitar Palabras (Nivel ${userProfileViewModel.userProfile.value?.currentLevel ?: ""})" // Usar userProfileViewModel
+                    binding.btnSolicitarPalabras.text = "Solicitar Palabras (Nivel ${userProfileViewModel.userProfile.value?.currentLevel ?: ""})"
                 }
             } else {
                 binding.btnSolicitarPalabras.visibility = View.GONE
             }
         })
 
-        userProfileViewModel.wordRequestOutcome.observe(this, Observer { resultOutcome -> // Usar userProfileViewModel
+        userProfileViewModel.wordRequestOutcome.observe(this, Observer { resultOutcome ->
             resultOutcome?.let { outcome ->
                 if (outcome is Result.Success) {
                     Toast.makeText(this, "Solicitud de palabras enviada.", Toast.LENGTH_SHORT).show()
                 }
-                userProfileViewModel.clearWordRequestOutcome() // Usar userProfileViewModel
+                userProfileViewModel.clearWordRequestOutcome()
             }
         })
 
-        userProfileViewModel.approveWordRequestOutcome.observe(this, Observer { resultOutcome -> // Usar userProfileViewModel
+        userProfileViewModel.approveWordRequestOutcome.observe(this, Observer { resultOutcome ->
             resultOutcome?.let { outcome ->
-                // El feedback de éxito/error ya se maneja con _errorMessage
-                userProfileViewModel.clearApproveWordRequestOutcome() // Usar userProfileViewModel
+                userProfileViewModel.clearApproveWordRequestOutcome()
             }
         })
 
-        // Observador para el evento de logout desde AuthViewModel
         authViewModel.logoutEvent.observe(this, Observer { hasLoggedOut ->
             if (hasLoggedOut == true) {
                 Toast.makeText(this, "Sesión cerrada.", Toast.LENGTH_SHORT).show()
-                navigateToLogin()
+                navigateToLogin() // Asegúrate que esta función está definida en tu Activity
                 authViewModel.onLogoutEventHandled()
             }
+        })
+
+        // --- Observadores para Estadísticas (estos SÍ deben actualizar los TextViews) ---
+        userProfileViewModel.wordsUsedCount.observe(this, Observer { count ->
+            binding.tvPalabrasUsadasCount.text = count.toString()
+        })
+
+        userProfileViewModel.phrasesCreatedCount.observe(this, Observer { count ->
+            // Asegúrate que tu binding tiene 'tvFrasesCreadasCount'
+            // Si tu XML aún usa 'tvPalabrasNuevasCount', debes cambiar el ID en el XML
+            // o cambiarlo aquí a binding.tvPalabrasNuevasCount.text
+            binding.tvFrasesCreadasCount.text = count.toString()
+        })
+
+        userProfileViewModel.availableWordsCount.observe(this, Observer { count ->
+            // Asegúrate que tu binding tiene 'tvPalabrasDisponiblesCount'
+            // Si tu XML aún usa 'tvPalabrasDesbloqueadasCount', debes cambiar el ID en el XML
+            // o cambiarlo aquí a binding.tvPalabrasDesbloqueadasCount.text
+            binding.tvPalabrasDisponiblesCount.text = count.toString()
+        })
+
+        userProfileViewModel.lockedWordsCount.observe(this, Observer { count ->
+            binding.tvPalabrasBloqueadasCount.text = count.toString()
         })
     }
 

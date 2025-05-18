@@ -22,4 +22,8 @@
     <string name="title_activity_class_detail">Detalles de la Clase</string>
     <string name="solicitar_palabras_placeholder">Solicitar Palabras (Nivel %1$d)</string>
     <string name="desbloquear_palabras_placeholder">Desbloquear Palabras (Nivel %1$d)</string>
+    <string name="frases_creadas">Frases Creadas:</string>
+    <string name="palabras_usadas">Palabras usadas:</string>
+    <string name="palabras_disponibles">Palabras disponibles:</string>
+    <string name="palabras_bloqueadas">Palabras bloqueadas:</string>
 </resources>

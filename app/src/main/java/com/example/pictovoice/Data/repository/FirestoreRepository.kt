@@ -50,15 +50,15 @@ class FirestoreRepository {
         11 to listOf(CATEGORY_ID_ACCIONES)
     )
 
-    suspend fun saveUser(user: User): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            usersCollection.document(user.userId).set(user.toMap()).await()
-            kotlin.Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e("FirestoreRepo", "Error guardando usuario ${user.userId}", e)
-            kotlin.Result.failure(e)
-        }
-    }
+//    suspend fun saveUser(user: User): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
+//        try {
+//            usersCollection.document(user.userId).set(user.toMap()).await()
+//            kotlin.Result.success(Unit)
+//        } catch (e: Exception) {
+//            Log.e("FirestoreRepo", "Error guardando usuario ${user.userId}", e)
+//            kotlin.Result.failure(e)
+//        }
+//    }
 
     suspend fun getUser(userId: String): kotlin.Result<User?> = withContext(Dispatchers.IO) {
         try {
@@ -94,17 +94,17 @@ class FirestoreRepository {
         }
     }
 
-    // Esta función es para que el PROFESOR apruebe/rechace (cambie el flag)
-    suspend fun updateUserWordRequestStatus(userId: String, hasRequested: Boolean): kotlin.Result<Unit> = try {
-        usersCollection.document(userId)
-            .update("hasPendingWordRequest", hasRequested)
-            .await()
-        Log.d("FirestoreRepo", "Updated hasPendingWordRequest to $hasRequested for user $userId")
-        kotlin.Result.success(Unit)
-    } catch (e: Exception) {
-        Log.e("FirestoreRepo", "Error updating word request status for user $userId", e)
-        kotlin.Result.failure(e)
-    }
+//    // Esta función es para que el PROFESOR apruebe/rechace (cambie el flag)
+//    suspend fun updateUserWordRequestStatus(userId: String, hasRequested: Boolean): kotlin.Result<Unit> = try {
+//        usersCollection.document(userId)
+//            .update("hasPendingWordRequest", hasRequested)
+//            .await()
+//        Log.d("FirestoreRepo", "Updated hasPendingWordRequest to $hasRequested for user $userId")
+//        kotlin.Result.success(Unit)
+//    } catch (e: Exception) {
+//        Log.e("FirestoreRepo", "Error updating word request status for user $userId", e)
+//        kotlin.Result.failure(e)
+//    }
 
     // NUEVA FUNCIÓN: Para que el ALUMNO registre su solicitud
     suspend fun recordStudentWordRequest(userId: String, requestedLevel: Int): kotlin.Result<Unit> = try {
@@ -250,21 +250,21 @@ class FirestoreRepository {
         }
     }
 
-    suspend fun savePictogram(pictogram: Pictogram): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val docRef = if (pictogram.pictogramId.isBlank()) {
-                pictogramsCollection.document()
-            } else {
-                pictogramsCollection.document(pictogram.pictogramId)
-            }
-            val pictogramToSave = if (pictogram.pictogramId.isBlank()) pictogram.copy(pictogramId = docRef.id) else pictogram
-            docRef.set(pictogramToSave.toMap()).await()
-            kotlin.Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e("FirestoreRepo", "Error guardando pictograma ${pictogram.name}", e)
-            kotlin.Result.failure(e)
-        }
-    }
+//    suspend fun savePictogram(pictogram: Pictogram): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
+//        try {
+//            val docRef = if (pictogram.pictogramId.isBlank()) {
+//                pictogramsCollection.document()
+//            } else {
+//                pictogramsCollection.document(pictogram.pictogramId)
+//            }
+//            val pictogramToSave = if (pictogram.pictogramId.isBlank()) pictogram.copy(pictogramId = docRef.id) else pictogram
+//            docRef.set(pictogramToSave.toMap()).await()
+//            kotlin.Result.success(Unit)
+//        } catch (e: Exception) {
+//            Log.e("FirestoreRepo", "Error guardando pictograma ${pictogram.name}", e)
+//            kotlin.Result.failure(e)
+//        }
+//    }
 
     suspend fun getPictogramsByCategoryAndLevel(categoryName: String, maxLevel: Int): kotlin.Result<List<Pictogram>> = withContext(Dispatchers.IO) {
         try {
@@ -282,18 +282,18 @@ class FirestoreRepository {
         }
     }
 
-    suspend fun getStudentCategories(): kotlin.Result<List<Category>> = withContext(Dispatchers.IO) {
-        try {
-            val querySnapshot = categoriesCollection
-                .orderBy("displayOrder", Query.Direction.ASCENDING)
-                .get().await()
-            val categories = querySnapshot.documents.mapNotNull { Category.fromSnapshot(it) }
-            kotlin.Result.success(categories)
-        } catch (e: Exception) {
-            Log.e("FirestoreRepo", "Error obteniendo categorías de pictogramas", e)
-            kotlin.Result.failure(e)
-        }
-    }
+//    suspend fun getStudentCategories(): kotlin.Result<List<Category>> = withContext(Dispatchers.IO) {
+//        try {
+//            val querySnapshot = categoriesCollection
+//                .orderBy("displayOrder", Query.Direction.ASCENDING)
+//                .get().await()
+//            val categories = querySnapshot.documents.mapNotNull { Category.fromSnapshot(it) }
+//            kotlin.Result.success(categories)
+//        } catch (e: Exception) {
+//            Log.e("FirestoreRepo", "Error obteniendo categorías de pictogramas", e)
+//            kotlin.Result.failure(e)
+//        }
+//    }
 
     // El profesor aprueba la solicitud Y establece el nivel de contenido aprobado
     suspend fun approveWordRequestAndSetContentLevel(userId: String, levelApproved: Int): kotlin.Result<Unit> = try {
@@ -309,6 +309,31 @@ class FirestoreRepository {
         Log.e("FirestoreRepo", "Error approving request / setting content level for $userId", e)
         kotlin.Result.failure(e)
     }
+
+    // --- NUEVAS FUNCIONES PARA ESTADÍSTICAS ---
+    suspend fun incrementPhrasesCreatedCount(userId: String): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            usersCollection.document(userId).update("phrasesCreatedCount", FieldValue.increment(1)).await()
+            Log.d("FirestoreRepo", "Incremented phrasesCreatedCount for user $userId")
+            kotlin.Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("FirestoreRepo", "Error incrementing phrasesCreatedCount for user $userId", e)
+            kotlin.Result.failure(e)
+        }
+    }
+
+    suspend fun incrementWordsUsedCount(userId: String, count: Int): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
+        if (count <= 0) return@withContext kotlin.Result.success(Unit) // No hacer nada si el conteo es 0 o negativo
+        try {
+            usersCollection.document(userId).update("wordsUsedCount", FieldValue.increment(count.toLong())).await()
+            Log.d("FirestoreRepo", "Incremented wordsUsedCount by $count for user $userId")
+            kotlin.Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("FirestoreRepo", "Error incrementing wordsUsedCount for user $userId", e)
+            kotlin.Result.failure(e)
+        }
+    }
+    // --- FIN NUEVAS FUNCIONES ---
 
     // addExperienceToStudent sigue igual, desbloquea las CARPETAS (unlockedCategories) al subir de nivel.
     // La VISIBILIDAD del CONTENIDO DENTRO de esas carpetas dependerá de maxContentLevelApproved.

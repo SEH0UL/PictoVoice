@@ -15,13 +15,17 @@ data class User(
     val createdAt: Timestamp = Timestamp.now(),
     val lastLogin: Timestamp = Timestamp.now(),
     val profileImageUrl: String = "",
-    val currentLevel: Int = 1, // Nivel actual del alumno (por EXP)
+    val currentLevel: Int = 1,
     val currentExp: Int = 0,
     val totalExp: Int = 0,
-    val unlockedCategories: List<String> = listOf(INITIAL_DEFAULT_CATEGORY_ID), // Carpetas que PUEDE ver (se actualiza al subir de nivel)
+    val unlockedCategories: List<String> = listOf(INITIAL_DEFAULT_CATEGORY_ID),
     val hasPendingWordRequest: Boolean = false,
     val levelWordsRequestedFor: Int = 0,
-    val maxContentLevelApproved: Int = 1 // NUEVO: Nivel máximo de contenido aprobado por el profesor
+    val maxContentLevelApproved: Int = 1,
+
+    // --- NUEVOS CAMPOS PARA ESTADÍSTICAS ---
+    val wordsUsedCount: Int = 0,        // Contador de palabras usadas en frases reproducidas
+    val phrasesCreatedCount: Int = 0    // Contador de frases reproducidas
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
         "userId" to userId,
@@ -38,7 +42,10 @@ data class User(
         "unlockedCategories" to unlockedCategories,
         "hasPendingWordRequest" to hasPendingWordRequest,
         "levelWordsRequestedFor" to levelWordsRequestedFor,
-        "maxContentLevelApproved" to maxContentLevelApproved // Añadir al mapa
+        "maxContentLevelApproved" to maxContentLevelApproved,
+        // --- AÑADIR NUEVOS CAMPOS AL MAPA ---
+        "wordsUsedCount" to wordsUsedCount,
+        "phrasesCreatedCount" to phrasesCreatedCount
     )
 
     companion object {
@@ -60,7 +67,10 @@ data class User(
                     unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf(INITIAL_DEFAULT_CATEGORY_ID),
                     hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false,
                     levelWordsRequestedFor = (data["levelWordsRequestedFor"] as? Long)?.toInt() ?: 0,
-                    maxContentLevelApproved = (data["maxContentLevelApproved"] as? Long)?.toInt() ?: 1 // Leer el nuevo campo, default 1
+                    maxContentLevelApproved = (data["maxContentLevelApproved"] as? Long)?.toInt() ?: 1,
+                    // --- LEER NUEVOS CAMPOS DEL SNAPSHOT ---
+                    wordsUsedCount = (data["wordsUsedCount"] as? Long)?.toInt() ?: 0,
+                    phrasesCreatedCount = (data["phrasesCreatedCount"] as? Long)?.toInt() ?: 0
                 )
             } catch (e: Exception) {
                 Log.e("User", "Error al convertir snapshot a User: ${e.message}", e)

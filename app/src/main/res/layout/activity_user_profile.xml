@@ -150,13 +150,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Palabras usadas:"
+                        android:text="@string/palabras_usadas"
                         android:textAppearance="?attr/textAppearanceBody2"/>
                     <TextView
-                        android:id="@+id/tvPalabrasUsadasCount"
-                        android:layout_width="wrap_content"
+                        android:id="@+id/tvPalabrasUsadasCount" android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        tools:text="16"
+                        tools:text="160"
                         android:textAppearance="?attr/textAppearanceHeadline5"
                         android:textStyle="bold"/>
                 </LinearLayout>
@@ -179,13 +178,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Palabras nuevas:"
+                        android:text="@string/frases_creadas"
                         android:textAppearance="?attr/textAppearanceBody2"/>
                     <TextView
-                        android:id="@+id/tvPalabrasNuevasCount"
-                        android:layout_width="wrap_content"
+                        android:id="@+id/tvFrasesCreadasCount" android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        tools:text="16"
+                        tools:text="25"
                         android:textAppearance="?attr/textAppearanceHeadline5"
                         android:textStyle="bold"/>
                 </LinearLayout>
@@ -208,13 +206,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Palabras desbloq.:"
+                        android:text="@string/palabras_disponibles"
                         android:textAppearance="?attr/textAppearanceBody2"/>
                     <TextView
-                        android:id="@+id/tvPalabrasDesbloqueadasCount"
-                        android:layout_width="wrap_content"
+                        android:id="@+id/tvPalabrasDisponiblesCount" android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        tools:text="16"
+                        tools:text="80"
                         android:textAppearance="?attr/textAppearanceHeadline5"
                         android:textStyle="bold"/>
                 </LinearLayout>
@@ -237,17 +234,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Palabras bloqueadas:"
-                        android:textAppearance="?attr/textAppearanceBody2"
-                        />
+                        android:text="@string/palabras_bloqueadas" android:textAppearance="?attr/textAppearanceBody2"/>
                     <TextView
-                        android:id="@+id/tvPalabrasBloqueadasCount"
-                        android:layout_width="wrap_content"
+                        android:id="@+id/tvPalabrasBloqueadasCount" android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        tools:text="16"
+                        tools:text="120"
                         android:textAppearance="?attr/textAppearanceHeadline5"
-                        android:textStyle="bold"
-                        />
+                        android:textStyle="bold"/>
                 </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

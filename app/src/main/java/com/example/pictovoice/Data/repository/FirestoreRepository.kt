@@ -74,13 +74,30 @@ class FirestoreRepository {
         }
     }
 
+    // Esta función es para que el PROFESOR apruebe/rechace (cambie el flag)
     suspend fun updateUserWordRequestStatus(userId: String, hasRequested: Boolean): kotlin.Result<Unit> = try {
         usersCollection.document(userId)
             .update("hasPendingWordRequest", hasRequested)
             .await()
+        Log.d("FirestoreRepo", "Updated hasPendingWordRequest to $hasRequested for user $userId")
         kotlin.Result.success(Unit)
     } catch (e: Exception) {
         Log.e("FirestoreRepo", "Error updating word request status for user $userId", e)
+        kotlin.Result.failure(e)
+    }
+
+    // NUEVA FUNCIÓN: Para que el ALUMNO registre su solicitud
+    suspend fun recordStudentWordRequest(userId: String, requestedLevel: Int): kotlin.Result<Unit> = try {
+        usersCollection.document(userId)
+            .update(mapOf(
+                "hasPendingWordRequest" to true,
+                "levelWordsRequestedFor" to requestedLevel
+            ))
+            .await()
+        Log.d("FirestoreRepo", "Recorded word request for user $userId at level $requestedLevel")
+        kotlin.Result.success(Unit)
+    } catch (e: Exception) {
+        Log.e("FirestoreRepo", "Error recording student word request for user $userId", e)
         kotlin.Result.failure(e)
     }
 

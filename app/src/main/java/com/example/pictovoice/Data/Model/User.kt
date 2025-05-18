@@ -4,7 +4,6 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import android.util.Log
 
-// ID de la categoría inicial por defecto (debe coincidir con la constante en StudentHomeViewModel y FirestoreRepository)
 private const val INITIAL_DEFAULT_CATEGORY_ID = "local_comida"
 
 data class User(
@@ -19,8 +18,9 @@ data class User(
     val currentLevel: Int = 1,
     val currentExp: Int = 0,
     val totalExp: Int = 0,
-    val unlockedCategories: List<String> = listOf(INITIAL_DEFAULT_CATEGORY_ID), // Categoría inicial por defecto
-    val hasPendingWordRequest: Boolean = false
+    val unlockedCategories: List<String> = listOf(INITIAL_DEFAULT_CATEGORY_ID),
+    val hasPendingWordRequest: Boolean = false,
+    val levelWordsRequestedFor: Int = 0 // NUEVO CAMPO: Nivel para el que ya se solicitaron palabras
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
         "userId" to userId,
@@ -35,7 +35,8 @@ data class User(
         "currentExp" to currentExp,
         "totalExp" to totalExp,
         "unlockedCategories" to unlockedCategories,
-        "hasPendingWordRequest" to hasPendingWordRequest
+        "hasPendingWordRequest" to hasPendingWordRequest,
+        "levelWordsRequestedFor" to levelWordsRequestedFor // Añadir al mapa
     )
 
     companion object {
@@ -55,7 +56,8 @@ data class User(
                     currentExp = (data["currentExp"] as? Long)?.toInt() ?: 0,
                     totalExp = (data["totalExp"] as? Long)?.toInt() ?: 0,
                     unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf(INITIAL_DEFAULT_CATEGORY_ID),
-                    hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false
+                    hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false,
+                    levelWordsRequestedFor = (data["levelWordsRequestedFor"] as? Long)?.toInt() ?: 0 // Leer el nuevo campo
                 )
             } catch (e: Exception) {
                 Log.e("User", "Error al convertir snapshot a User: ${e.message}", e)

@@ -12,76 +12,67 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/white"
+        android:minHeight="90dp"
         android:paddingHorizontal="8dp"
-        android:paddingVertical="4dp" android:minHeight="90dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:paddingVertical="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <ImageButton
-            android:id="@+id/btnUserProfile"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/ic_default_profile"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Ver Perfil"
-            app:tint="@color/teal_700" app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginStart="4dp"/>
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvPhrasePictograms"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:minHeight="75dp"
             android:orientation="horizontal"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintStart_toEndOf="@id/btnUserProfile" app:layout_constraintEnd_toStartOf="@+id/btnDeletePictogram"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginStart="8dp" tools:listitem="@layout/item_pictogram_phrase"
-            tools:itemCount="3"/>
+            app:layout_constraintEnd_toStartOf="@+id/btnDeletePictogram"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:itemCount="3"
+            tools:listitem="@layout/item_pictogram_phrase" />
 
         <ImageButton
             android:id="@+id/btnDeletePictogram"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@drawable/ic_backspace_outline"
+            android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/Delete_Pictogram"
-            app:tint="@color/primary_dark_color"
+            android:src="@drawable/ic_backspace_outline"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btnPlayPhrase"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginEnd="8dp"/>
+            app:tint="@color/primary_dark_color" />
 
         <ImageButton
             android:id="@+id/btnPlayPhrase"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@drawable/ic_play_circle_outline"
+            android:layout_marginEnd="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Reproducir frase"
+            android:src="@drawable/ic_play_circle_outline"
             android:visibility="gone"
-            app:tint="@color/primary_color"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginEnd="4dp"/>
+            app:tint="@color/primary_color" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView
         android:id="@+id/tvLabelCategories"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
         android:text="Carpetas"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/clPhraseBar"/>
+        app:layout_constraintTop_toBottomOf="@id/clPhraseBar" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/categoryNavigationContainer"
@@ -90,26 +81,38 @@
         android:orientation="horizontal"
         android:paddingVertical="8dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintTop_toBottomOf="@id/tvLabelCategories"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:listitem="@layout/item_category_folder"
-        tools:itemCount="5"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvLabelCategories"
+        tools:itemCount="5"
+        tools:listitem="@layout/item_category_folder" />
+
+    <ImageButton
+        android:id="@+id/btnUserProfile"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_default_profile"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Ver Perfil"
+        app:tint="@color/teal_700"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvCurrentCategoryName"
+        app:layout_constraintBottom_toBottomOf="@id/tvCurrentCategoryName" />
 
     <TextView
         android:id="@+id/tvCurrentCategoryName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textStyle="bold"
+        android:background="@color/primary_color"
         android:gravity="center"
         android:padding="8dp"
-        android:background="@color/primary_color"
         android:textColor="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/categoryNavigationContainer"
-        app:layout_constraintStart_toStartOf="parent"
+        android:textSize="18sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:text="Comida"/>
+        app:layout_constraintStart_toEndOf="@id/btnUserProfile" app:layout_constraintTop_toBottomOf="@id/categoryNavigationContainer"
+        tools:text="Comida" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvDynamicPictograms"
@@ -118,45 +121,42 @@
         android:layout_margin="8dp"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:spanCount="4"
-        app:layout_constraintTop_toBottomOf="@id/tvCurrentCategoryName"
         app:layout_constraintBottom_toTopOf="@+id/tvLabelFixed"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:listitem="@layout/item_pictogram_selection"
-        tools:itemCount="12"/>
-
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvCurrentCategoryName" tools:itemCount="12"
+        tools:listitem="@layout/item_pictogram_selection" />
 
     <TextView
         android:id="@+id/tvLabelFixed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="4dp"
         android:text="Fijos"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:layout_marginStart="16dp"
-        android:layout_marginBottom="4dp"
         app:layout_constraintBottom_toTopOf="@+id/llFixedElements"
-        app:layout_constraintStart_toStartOf="parent"/>
-
+        app:layout_constraintStart_toStartOf="parent" />
 
     <LinearLayout
         android:id="@+id/llFixedElements"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:background="@color/white"
+        android:orientation="vertical"
         android:paddingVertical="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <TextView
             android:id="@+id/tvLabelPronouns"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pronombres:"
             android:layout_marginStart="16dp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:text="Pronombres:" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvPronouns"
@@ -166,17 +166,17 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/item_pictogram_selection"
-            tools:itemCount="4"/>
+            tools:itemCount="4"
+            tools:listitem="@layout/item_pictogram_selection" />
 
         <TextView
             android:id="@+id/tvLabelFixedVerbs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Verbos:"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:text="Verbos:" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvFixedVerbs"
@@ -186,8 +186,8 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/item_pictogram_selection"
-            tools:itemCount="6"/>
+            tools:itemCount="6"
+            tools:listitem="@layout/item_pictogram_selection" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

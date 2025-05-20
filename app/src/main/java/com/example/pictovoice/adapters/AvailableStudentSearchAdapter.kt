@@ -1,15 +1,19 @@
-package com.example.pictovoice.adapters // O ui.clasedetail
+package com.example.pictovoice.adapters
 
+import User
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.pictovoice.Data.Model.User
 import com.example.pictovoice.R
 import com.example.pictovoice.databinding.ItemAvailableStudentSearchBinding
-// import com.bumptech.glide.Glide
 
+/**
+ * Adaptador para mostrar una lista de alumnos ([User]) disponibles en un RecyclerView.
+ * @param onStudentSelected Lambda que se ejecuta cuando un alumno es seleccionado.
+ */
 class AvailableStudentSearchAdapter(
     private val onStudentSelected: (User) -> Unit
 ) : ListAdapter<User, AvailableStudentSearchAdapter.ViewHolder>(StudentSearchDiffCallback()) {
@@ -28,35 +32,35 @@ class AvailableStudentSearchAdapter(
         holder.bind(student)
     }
 
+    /**
+     * ViewHolder para cada item de alumno.
+     * @param binding El ViewBinding para el layout del item.
+     */
     inner class ViewHolder(private val binding: ItemAvailableStudentSearchBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         init {
             itemView.setOnClickListener {
-                val position = adapterPosition
+                val position = layoutPosition // Usando layoutPosition ya que bindingAdapterPosition da errores extraños
                 if (position != RecyclerView.NO_POSITION) {
                     onStudentSelected(getItem(position))
+                } else {
+                    Log.w("AdapterClick", "Clicked item with NO_POSITION (using layoutPosition)")
                 }
             }
         }
 
         fun bind(student: User) {
             binding.tvAvailableStudentName.text = student.fullName
-            binding.tvAvailableStudentUsername.text = "@${student.username}" // Añadir @ para distinguirlo
-
-            // Cargar imagen de perfil (ejemplo con placeholder)
-            // if (student.profileImageUrl.isNotBlank()) {
-            //    Glide.with(binding.ivAvailableStudentProfile.context).load(student.profileImageUrl)
-            //        .placeholder(R.drawable.ic_default_profile)
-            //        .circleCrop()
-            //        .into(binding.ivAvailableStudentProfile)
-            // } else {
+            binding.tvAvailableStudentUsername.text = "@${student.username}"
             binding.ivAvailableStudentProfile.setImageResource(R.drawable.ic_default_profile)
-            // }
         }
     }
 
-    class StudentSearchDiffCallback : DiffUtil.ItemCallback<User>() {
+    /**
+     * Callback para calcular la diferencia entre dos listas de [User].
+     */
+    private class StudentSearchDiffCallback : DiffUtil.ItemCallback<User>() {
         override fun areItemsTheSame(oldItem: User, newItem: User): Boolean {
             return oldItem.userId == newItem.userId
         }

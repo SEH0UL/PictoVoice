@@ -1,21 +1,33 @@
-package com.example.pictovoice.adapters // Asegúrate que el package es correcto
+package com.example.pictovoice.adapters // Asegúrate que este es el paquete correcto
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.pictovoice.Data.Model.Category // Importa tu modelo Category
+import com.example.pictovoice.data.model.Category
 import com.example.pictovoice.databinding.ItemCategoryFolderBinding
-// import com.bumptech.glide.Glide // Si tus categorías tienen iconos URL
 
+
+/**
+ * Adaptador para mostrar una lista de carpetas de categorías ([Category]) en un RecyclerView.
+ * Se utiliza en [com.example.pictovoice.ui.home.HomeActivity] para la navegación entre
+ * categorías de pictogramas dinámicas.
+ *
+ * Utiliza [ListAdapter] para un manejo eficiente de las actualizaciones de la lista.
+ *
+ * @param onCategoryClick Lambda que se ejecuta cuando una carpeta de categoría es seleccionada.
+ * Recibe el objeto [Category] seleccionado como parámetro.
+ */
 class CategoryAdapter(
     private val onCategoryClick: (Category) -> Unit
 ) : ListAdapter<Category, CategoryAdapter.ViewHolder>(CategoryDiffCallback()) {
 
+    /**
+     * Crea nuevas vistas (invocado por el layout manager).
+     */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemCategoryFolderBinding.inflate( // Asegúrate que item_category_folder.xml existe
+        val binding = ItemCategoryFolderBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false
@@ -23,29 +35,58 @@ class CategoryAdapter(
         return ViewHolder(binding)
     }
 
+    /**
+     * Reemplaza el contenido de una vista (invocado por el layout manager).
+     * Obtiene la [Category] en la [position] dada y vincula los datos al [ViewHolder].
+     */
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val category = getItem(position)
-        holder.bind(category, onCategoryClick)
+        holder.bind(category) // Ya no se pasa onCategoryClick aquí
     }
 
+    /**
+     * ViewHolder para cada item de categoría (carpeta).
+     * Muestra el nombre de la categoría en un botón.
+     *
+     * @param binding El ViewBinding para el layout del item (`item_category_folder.xml`).
+     */
     inner class ViewHolder(private val binding: ItemCategoryFolderBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+        RecyclerView.ViewHolder(binding.root) { // itemView es binding.root
 
-        fun bind(category: Category, onCategoryClick: (Category) -> Unit) {
-            binding.btnCategoryFolder.text = category.name
-
-            // Comenta o elimina el listener en binding.root si lo tenías así:
-            // binding.root.setOnClickListener { /* ... */ }
-
-            // Y prueba a poner el listener directamente en el botón:
+        init {
+            // Configurar el listener de clic en el botón (o en itemView si se prefiere para toda la carpeta)
             binding.btnCategoryFolder.setOnClickListener {
-                Log.d("CategoryAdapter", "btnCategoryFolder clicked for: ${category.name}") // Nuevo log para verificar
-                onCategoryClick(category)
+                val position = layoutPosition // Usar bindingAdapterPosition o layoutPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val category = getItem(position)
+                    // Log.d("CategoryAdapter", "Carpeta de categoría pulsada: ${category.name}") // Log eliminado para versión final
+                    onCategoryClick(category) // Llama directamente a la lambda del adaptador
+                }
             }
+            // Si el clic debe ser en toda la carpeta y no solo el botón:
+            // itemView.setOnClickListener { ... }
+        }
+
+        /**
+         * Vincula los datos de la [category] a las vistas del item.
+         * @param category El objeto [Category] a mostrar.
+         */
+        fun bind(category: Category) {
+            binding.btnCategoryFolder.text = category.name
+            // Si tuvieras un ImageView en item_category_folder.xml para el icono:
+            // if (category.iconResourceId != 0) {
+            //    binding.ivCategoryFolderIcon.setImageResource(category.iconResourceId)
+            //    binding.ivCategoryFolderIcon.visibility = View.VISIBLE
+            // } else {
+            //    binding.ivCategoryFolderIcon.visibility = View.GONE // O un placeholder
+            // }
         }
     }
 
-    class CategoryDiffCallback : DiffUtil.ItemCallback<Category>() {
+    /**
+     * Callback para calcular la diferencia entre dos listas de [Category] para [ListAdapter].
+     */
+    private class CategoryDiffCallback : DiffUtil.ItemCallback<Category>() {
         override fun areItemsTheSame(oldItem: Category, newItem: Category): Boolean {
             return oldItem.categoryId == newItem.categoryId
         }

@@ -5,15 +5,32 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.pictovoice.Data.Model.Classroom
+import com.example.pictovoice.data.model.Classroom // Asegúrate que el path a Classroom es correcto
 import com.example.pictovoice.databinding.ItemTeacherClassBinding
 
+/**
+ * Adaptador para mostrar una lista de clases ([Classroom]) creadas por un profesor
+ * en [com.example.pictovoice.ui.teacher.TeacherHomeActivity].
+ *
+ * Cada item de la lista proporciona opciones para acceder, editar o eliminar la clase.
+ * Utiliza [ListAdapter] para un manejo eficiente de las actualizaciones de la lista.
+ *
+ * @param onAccessClick Lambda que se ejecuta cuando se pulsa el botón "Acceder" de una clase.
+ * Recibe el objeto [Classroom] correspondiente.
+ * @param onEditClick Lambda que se ejecuta cuando se pulsa el botón "Editar" de una clase.
+ * Recibe el objeto [Classroom] correspondiente.
+ * @param onDeleteClick Lambda que se ejecuta cuando se pulsa el botón "Eliminar" de una clase.
+ * Recibe el objeto [Classroom] correspondiente.
+ */
 class TeacherClassesAdapter(
     private val onAccessClick: (Classroom) -> Unit,
     private val onEditClick: (Classroom) -> Unit,
-    private val onDeleteClick: (Classroom) -> Unit // Callback para el clic en eliminar
+    private val onDeleteClick: (Classroom) -> Unit
 ) : ListAdapter<Classroom, TeacherClassesAdapter.ViewHolder>(ClassroomDiffCallback()) {
 
+    /**
+     * Crea nuevas vistas (invocado por el layout manager).
+     */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemTeacherClassBinding.inflate(
             LayoutInflater.from(parent.context),
@@ -23,45 +40,68 @@ class TeacherClassesAdapter(
         return ViewHolder(binding)
     }
 
+    /**
+     * Reemplaza el contenido de una vista (invocado por el layout manager).
+     * Obtiene la [Classroom] en la [position] dada y vincula los datos al [ViewHolder].
+     */
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val classroom = getItem(position)
-        // Pasar todos los callbacks al ViewHolder
-        holder.bind(classroom, onAccessClick, onEditClick, onDeleteClick)
+        holder.bind(classroom) // Los listeners de clic ya están en el ViewHolder init
     }
 
+    /**
+     * ViewHolder para cada item de clase en la lista del profesor.
+     * Muestra el nombre de la clase y gestiona los clics en los botones de acción.
+     *
+     * @param binding El ViewBinding para el layout del item (`item_teacher_class.xml`).
+     */
     inner class ViewHolder(private val binding: ItemTeacherClassBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+        RecyclerView.ViewHolder(binding.root) { // itemView es binding.root
 
-        // El ViewHolder ahora también recibe onDeleteClick
-        fun bind(
-            classroom: Classroom,
-            onAccessClick: (Classroom) -> Unit,
-            onEditClick: (Classroom) -> Unit,
-            onDeleteClick: (Classroom) -> Unit
-        ) {
-            binding.tvClassName.text = classroom.className
-
+        init {
             binding.btnAccessClass.setOnClickListener {
-                onAccessClick(classroom)
+                val position = layoutPosition // Usamos layoutPosition por consistencia
+                if (position != RecyclerView.NO_POSITION) {
+                    onAccessClick(getItem(position))
+                }
             }
 
             binding.btnEditClass.setOnClickListener {
-                onEditClick(classroom)
+                val position = layoutPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onEditClick(getItem(position))
+                }
             }
 
-            // Configurar el listener para el botón de eliminar
-            binding.btnDeleteClass.setOnClickListener { // Asumiendo que tienes btnDeleteClass en item_teacher_class.xml
-                onDeleteClick(classroom)
+            binding.btnDeleteClass.setOnClickListener {
+                val position = layoutPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onDeleteClick(getItem(position))
+                }
             }
+        }
+
+        /**
+         * Vincula los datos de la [classroom] a las vistas del item.
+         * @param classroom El objeto [Classroom] a mostrar.
+         */
+        fun bind(classroom: Classroom) {
+            binding.tvClassName.text = classroom.className
+            // El layout item_teacher_class.xml contiene los botones, cuyos listeners
+            // ya están configurados en el bloque init del ViewHolder.
         }
     }
 
-    class ClassroomDiffCallback : DiffUtil.ItemCallback<Classroom>() {
+    /**
+     * Callback para calcular la diferencia entre dos listas de [Classroom] para [ListAdapter].
+     */
+    private class ClassroomDiffCallback : DiffUtil.ItemCallback<Classroom>() {
         override fun areItemsTheSame(oldItem: Classroom, newItem: Classroom): Boolean {
             return oldItem.classId == newItem.classId
         }
 
         override fun areContentsTheSame(oldItem: Classroom, newItem: Classroom): Boolean {
+            // El data class Classroom ya implementa equals() basado en todas sus propiedades.
             return oldItem == newItem
         }
     }

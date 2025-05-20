@@ -5,20 +5,25 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingStart="4dp" android:paddingEnd="4dp"   android:paddingTop="2dp"    android:paddingBottom="2dp" android:layout_marginStart="4dp"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp"
+    android:layout_marginStart="4dp"
     android:layout_marginEnd="4dp"
-    android:background="@drawable/ic_category_folder_background"
-    android:clickable="true"
-    android:focusable="true">
-
-    <Button
-        android:id="@+id/btnCategoryFolder"
-        style="?android:attr/borderlessButtonStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:minWidth="60dp" android:padding="10dp" android:textSize="12sp" android:textAllCaps="false"
-        android:textColor="@color/primary_color"
-        android:background="@android:color/transparent"
-        tools:text="Comida" />
+    android:background="@drawable/ic_category_folder_background" android:clickable="true"
+    android:focusable="true"
+    android:contentDescription="@string/cd_category_folder_prefix_dynamic"> <Button
+    android:id="@+id/btnCategoryFolder"
+    style="?android:attr/borderlessButtonStyle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:minWidth="60dp"
+    android:padding="10dp"
+    android:textSize="12sp"
+    android:textAllCaps="false"
+    android:textColor="@color/primary_color"
+    android:background="@android:color/transparent"
+    tools:text="Comida" />
 
 </LinearLayout>

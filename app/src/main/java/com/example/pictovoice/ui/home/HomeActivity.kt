@@ -1,6 +1,6 @@
-package com.example.pictovoice.ui.home // Asegúrate que el package es correcto
+package com.example.pictovoice.ui.home
 
-import android.content.Intent // Asegúrate de tener este import
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -8,19 +8,30 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer // Necesario para observar LiveData
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.pictovoice.Data.Model.Category // Importa tu modelo de Category
+import com.example.pictovoice.R // Para recursos como strings y drawables
 import com.example.pictovoice.adapters.CategoryAdapter
-import com.example.pictovoice.adapters.FixedPictogramAdapter // Importaste FixedPictogramAdapter
+import com.example.pictovoice.adapters.FixedPictogramAdapter
 import com.example.pictovoice.adapters.PhrasePictogramAdapter
 import com.example.pictovoice.adapters.SelectionPictogramAdapter
 import com.example.pictovoice.databinding.ActivityHomeBinding
 import com.example.pictovoice.ui.auth.MainActivity
-import com.example.pictovoice.ui.userprofile.UserProfileActivity // IMPORTA UserProfileActivity
+import com.example.pictovoice.ui.userprofile.UserProfileActivity
 import com.example.pictovoice.viewmodels.StudentHomeViewModel
 import com.google.firebase.auth.FirebaseAuth
 
+private const val TAG = "HomeActivity" // Tag para Logs
+
+/**
+ * Activity principal para el rol de Alumno.
+ * Muestra pictogramas organizados en categorías fijas y dinámicas, permite la selección
+ * de pictogramas para formar frases, reproduce el audio de las frases, y gestiona la
+ * navegación al perfil del usuario.
+ * Se actualiza en tiempo real a los cambios en los datos del usuario (nivel, EXP, contenido desbloqueado)
+ * y notifica al alumno sobre subidas de nivel.
+ */
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
@@ -31,205 +42,233 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var fixedVerbsAdapter: FixedPictogramAdapter
     private lateinit var dynamicPictogramsAdapter: SelectionPictogramAdapter
     private lateinit var categoryAdapter: CategoryAdapter
+
     private val firebaseAuth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        Log.d(TAG, "onCreate: Iniciando HomeActivity.")
 
-        Log.d("HomeActivity", "onCreate called")
-
-        if (firebaseAuth.currentUser == null) {
-            Log.w("HomeActivity", "User not authenticated, navigating to login.")
+        val currentUser = firebaseAuth.currentUser
+        if (currentUser == null || currentUser.uid.isBlank()) {
+            Log.w(TAG, "Usuario no autenticado o UID no disponible. Redirigiendo a Login.")
             navigateToLogin()
-            return
+            return // Salir de onCreate si no hay usuario
         }
 
         setupRecyclerViews()
-        setupClickListeners() // El listener del nuevo botón se añadirá aquí
+        setupClickListeners()
         observeViewModel()
 
-        firebaseAuth.currentUser?.uid?.let { userId ->
-            Log.d("HomeActivity", "Starting to load and listen to user data for UID: $userId")
-            // CAMBIO AQUÍ: Llama a la nueva función que configura el listener
-            viewModel.loadAndListenToUserData(userId)
-        }
+        Log.d(TAG, "Solicitando carga y escucha de datos para el usuario UID: ${currentUser.uid}")
+        viewModel.loadAndListenToUserData(currentUser.uid)
     }
 
+    /**
+     * Configura todos los RecyclerViews y sus adaptadores.
+     */
     private fun setupRecyclerViews() {
-        Log.d("HomeActivity", "Setting up RecyclerViews")
-        // Adaptador para la frase
+        Log.d(TAG, "Configurando RecyclerViews...")
+
+        // Adaptador para la frase (pictogramas seleccionados)
         phraseAdapter = PhrasePictogramAdapter()
-        binding.rvPhrasePictograms.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvPhrasePictograms.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.rvPhrasePictograms.adapter = phraseAdapter
 
-        // Adaptador para pronombres
+        // Adaptador para pronombres (pictogramas fijos)
         pronounsAdapter = FixedPictogramAdapter { pictogram ->
-            Log.d("HomeActivity", "Pronoun clicked: ${pictogram.name}")
+            Log.d(TAG, "Pictograma de pronombre seleccionado: ${pictogram.name}")
             viewModel.addPictogramToPhrase(pictogram)
         }
-        binding.rvPronouns.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvPronouns.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.rvPronouns.adapter = pronounsAdapter
 
         // Adaptador para verbos fijos
         fixedVerbsAdapter = FixedPictogramAdapter { pictogram ->
-            Log.d("HomeActivity", "Fixed verb clicked: ${pictogram.name}")
+            Log.d(TAG, "Pictograma de verbo fijo seleccionado: ${pictogram.name}")
             viewModel.addPictogramToPhrase(pictogram)
         }
-        binding.rvFixedVerbs.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.rvFixedVerbs.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.rvFixedVerbs.adapter = fixedVerbsAdapter
 
-        // Adaptador para pictogramas dinámicos
+        // Adaptador para pictogramas dinámicos (de la categoría seleccionada)
         dynamicPictogramsAdapter = SelectionPictogramAdapter { pictogram ->
-            Log.d("HomeActivity", "Dynamic pictogram clicked: ${pictogram.name}")
+            Log.d(TAG, "Pictograma dinámico seleccionado: ${pictogram.name}")
             viewModel.addPictogramToPhrase(pictogram)
         }
-        // Asegúrate que el LayoutManager para rvDynamicPictograms se define correctamente
-        // (preferiblemente en XML con spanCount="4", o aquí si es necesario)
-        // Ejemplo si se configura aquí:
-        // binding.rvDynamicPictograms.layoutManager = GridLayoutManager(this, 4)
+        // El GridLayoutManager y spanCount ya están definidos en el XML para rvDynamicPictograms
+        // app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        // app:spanCount="4"
         binding.rvDynamicPictograms.adapter = dynamicPictogramsAdapter
 
-
-        // Adaptador para categorías
+        // Adaptador para las carpetas de categorías dinámicas
         categoryAdapter = CategoryAdapter { category ->
-            Log.d("HomeActivity", "Category clicked: ${category.name}")
+            Log.d(TAG, "Carpeta de categoría seleccionada: ${category.name}")
+            // El ViewModel internamente usará el maxContentLevelApproved del usuario actual
             viewModel.loadDynamicPictogramsByLocalCategory(category)
         }
-        binding.categoryNavigationContainer.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.categoryNavigationContainer.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.categoryNavigationContainer.adapter = categoryAdapter
     }
 
+    /**
+     * Configura los listeners para los botones y otros elementos interactivos de la UI.
+     */
     private fun setupClickListeners() {
-        Log.d("HomeActivity", "Setting up ClickListeners")
+        Log.d(TAG, "Configurando ClickListeners...")
         binding.btnPlayPhrase.setOnClickListener {
-            Log.d("HomeActivity", "Play Phrase button clicked")
+            Log.d(TAG, "Botón 'Reproducir Frase' pulsado.")
             viewModel.onPlayPhraseClicked()
         }
 
         binding.btnDeletePictogram.setOnClickListener {
-            Log.d("HomeActivity", "Delete Pictogram button clicked (short)")
+            Log.d(TAG, "Botón 'Borrar Último Pictograma' pulsado (clic corto).")
             viewModel.deleteLastPictogramFromPhrase()
         }
 
         binding.btnDeletePictogram.setOnLongClickListener {
-            Log.d("HomeActivity", "Delete Pictogram button clicked (LONG)")
-            AlertDialog.Builder(this)
-                .setTitle("Borrar Frase Completa")
-                .setMessage("¿Estás seguro de que quieres borrar toda la frase?")
-                .setPositiveButton("Sí, borrar") { dialog, _ ->
-                    viewModel.clearPhrase()
-                    dialog.dismiss()
-                }
-                .setNegativeButton("Cancelar", null)
-                .show()
+            Log.d(TAG, "Botón 'Borrar Último Pictogram' pulsado (clic largo) -> Borrar frase completa.")
+            showClearPhraseConfirmationDialog()
             true // Indica que el long click ha sido consumido
         }
 
-        // ***** INICIO: CÓDIGO AÑADIDO PARA NAVEGACIÓN AL PERFIL *****
         binding.btnUserProfile.setOnClickListener {
-            val userId = firebaseAuth.currentUser?.uid
-            if (userId != null) {
-                val intent = Intent(this, UserProfileActivity::class.java).apply {
-                    putExtra("USER_ID_EXTRA", userId)
-                    // Opcional: Pasar el rol del visualizador.
-                    // Como es el alumno viendo su propio perfil, UserProfileActivity
-                    // ya tiene lógica para manejar esto si compara el targetUserId con el viewerUserId.
-                    // putExtra("VIEWER_ROLE_EXTRA", "student")
-                }
-                startActivity(intent)
-                Log.d("HomeActivity", "Navigating to UserProfileActivity for UID: $userId")
-            } else {
-                Toast.makeText(this, "Error: No se pudo obtener el ID del usuario.", Toast.LENGTH_SHORT).show()
-                Log.e("HomeActivity", "btnUserProfile clicked but currentUser or UID is null.")
-                // Considera desloguear o manejar este caso de error si ocurre frecuentemente.
-            }
+            Log.d(TAG, "Botón 'Perfil de Usuario' pulsado.")
+            navigateToUserProfile()
         }
-        // ***** FIN: CÓDIGO AÑADIDO PARA NAVEGACIÓN AL PERFIL *****
     }
 
-    private fun observeViewModel() {
-        Log.d("HomeActivity", "Observing ViewModel LiveData")
+    /**
+     * Muestra un diálogo de confirmación antes de borrar la frase completa.
+     */
+    private fun showClearPhraseConfirmationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.home_dialog_title_clear_phrase))
+            .setMessage(getString(R.string.home_dialog_message_clear_phrase))
+            .setPositiveButton(getString(R.string.home_dialog_button_yes_clear)) { dialog, _ ->
+                viewModel.clearPhrase()
+                dialog.dismiss()
+            }
+            .setNegativeButton(getString(R.string.dialog_button_cancel), null) // Reutilizar string común
+            .show()
+    }
 
-        viewModel.phrasePictograms.observe(this) { pictograms ->
-            Log.d("HomeActivity", "Phrase pictograms updated: ${pictograms?.size ?: 0} items")
-            phraseAdapter.submitList(pictograms?.toList()) // Convertir a List si es necesario
-            if (pictograms?.isNotEmpty() == true) {
+    /**
+     * Configura los observadores para los LiveData del [StudentHomeViewModel].
+     * Actualiza la UI en respuesta a los cambios de datos.
+     */
+    private fun observeViewModel() {
+        Log.d(TAG, "Configurando Observadores del ViewModel...")
+
+        viewModel.phrasePictograms.observe(this, Observer { pictograms ->
+            Log.d(TAG, "LiveData phrasePictograms actualizado: ${pictograms?.size ?: 0} items.")
+            phraseAdapter.submitList(pictograms) // ListAdapter maneja nulls internamente como lista vacía
+            if (!pictograms.isNullOrEmpty()) {
                 binding.rvPhrasePictograms.smoothScrollToPosition(pictograms.size - 1)
             }
-        }
+        })
 
-        viewModel.playButtonVisibility.observe(this) { isVisible ->
-            Log.d("HomeActivity", "Play button visibility changed: $isVisible")
+        viewModel.playButtonVisibility.observe(this, Observer { isVisible ->
+            Log.d(TAG, "LiveData playButtonVisibility actualizado: $isVisible.")
             binding.btnPlayPhrase.visibility = if (isVisible) View.VISIBLE else View.GONE
-        }
+        })
 
-        viewModel.pronounPictograms.observe(this) { pictograms ->
-            Log.d("HomeActivity", "Pronoun pictograms updated: ${pictograms?.size ?: 0} items")
+        viewModel.pronounPictograms.observe(this, Observer { pictograms ->
+            Log.d(TAG, "LiveData pronounPictograms actualizado: ${pictograms?.size ?: 0} items.")
             pronounsAdapter.submitList(pictograms)
-        }
+        })
 
-        viewModel.fixedVerbPictograms.observe(this) { pictograms ->
-            Log.d("HomeActivity", "Fixed verb pictograms updated: ${pictograms?.size ?: 0} items")
+        viewModel.fixedVerbPictograms.observe(this, Observer { pictograms ->
+            Log.d(TAG, "LiveData fixedVerbPictograms actualizado: ${pictograms?.size ?: 0} items.")
             fixedVerbsAdapter.submitList(pictograms)
-        }
+        })
 
-        viewModel.dynamicPictograms.observe(this) { pictograms ->
-            Log.d("HomeActivity", "Dynamic pictograms updated: ${pictograms?.size ?: 0} items. Category: ${viewModel.currentDynamicCategoryName.value}")
+        viewModel.dynamicPictograms.observe(this, Observer { pictograms ->
+            Log.d(TAG, "LiveData dynamicPictograms actualizado: ${pictograms?.size ?: 0} items para categoría '${viewModel.currentDynamicCategoryName.value}'.")
             dynamicPictogramsAdapter.submitList(pictograms)
-        }
+        })
 
-        viewModel.currentDynamicCategoryName.observe(this) { categoryName ->
-            Log.d("HomeActivity", "Current dynamic category name updated: $categoryName")
+        viewModel.currentDynamicCategoryName.observe(this, Observer { categoryName ->
+            Log.d(TAG, "LiveData currentDynamicCategoryName actualizado: $categoryName.")
             binding.tvCurrentCategoryName.text = categoryName
-        }
+        })
 
-        viewModel.availableCategories.observe(this) { categories ->
-            Log.d("HomeActivity", "Available categories updated: ${categories?.size ?: 0} items")
+        viewModel.availableCategories.observe(this, Observer { categories ->
+            Log.d(TAG, "LiveData availableCategories actualizado: ${categories?.size ?: 0} items.")
             categoryAdapter.submitList(categories)
-        }
+        })
 
-        viewModel.isLoading.observe(this) { isLoading ->
-            Log.d("HomeActivity", "isLoading state changed: $isLoading")
-            // Aquí podrías manejar un ProgressBar general para la actividad si lo deseas
-            // binding.activityHomeProgressBar.visibility = if(isLoading) View.VISIBLE else View.GONE
-        }
+        viewModel.isLoading.observe(this, Observer { isLoading ->
+            Log.d(TAG, "LiveData isLoading actualizado: $isLoading.")
+            // Aquí podrías controlar un ProgressBar general para la actividad si lo tuvieras.
+            // Por ejemplo: binding.homeProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        })
 
-        viewModel.errorMessage.observe(this) { errorMessage ->
+        viewModel.errorMessage.observe(this, Observer { errorMessage ->
             errorMessage?.let {
-                Log.e("HomeActivity", "Error message received: $it")
+                Log.w(TAG, "LiveData errorMessage actualizado: $it")
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
-                // Considera llamar a una función en el ViewModel para limpiar el mensaje después de mostrarlo
-                // viewModel.clearErrorMessage()
+                // Considerar llamar a viewModel.clearErrorMessage() si el mensaje es un evento de un solo uso.
             }
-        }
+        })
 
-        viewModel.currentUser.observe(this) { user ->
+        viewModel.currentUser.observe(this, Observer { user ->
+            // El ViewModel se actualiza en tiempo real.
+            // La UI de pictogramas/categorías se refresca a través de refreshUiBasedOnCurrentUser() en el VM.
+            // Aquí podríamos actualizar elementos específicos de la UI que dependan directamente del usuario,
+            // como un saludo, o el nivel si se mostrara en esta pantalla.
             user?.let {
-                Log.d("HomeActivity", "Current user data updated in UI: ${it.fullName}, Level: ${it.currentLevel}, MaxApproved: ${it.maxContentLevelApproved}")
-                // Aquí puedes actualizar cualquier UI que muestre info del usuario si es necesario
+                Log.i(TAG, "LiveData currentUser actualizado: ${it.fullName}, Nivel: ${it.currentLevel}, MaxApprovedLvl: ${it.maxContentLevelApproved}")
             }
-        }
+        })
 
-        viewModel.levelUpEvent.observe(this) { newLevel ->
+        viewModel.levelUpEvent.observe(this, Observer { newLevel ->
             newLevel?.let {
-                Log.d("HomeActivity", "LevelUp event received for level $it")
-                AlertDialog.Builder(this)
-                    .setTitle("¡Has subido de Nivel!")
-                    .setMessage("¡Felicidades! Has alcanzado el Nivel $it.")
-                    .setPositiveButton("¡Genial!") { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    .setOnDismissListener {
-                        viewModel.levelUpNotificationShown() // Informar al ViewModel que la notificación se mostró
-                    }
-                    .setCancelable(false) // Para que el usuario deba pulsar el botón
-                    .show()
+                Log.i(TAG, "LiveData levelUpEvent recibido para nivel $it.")
+                showLevelUpDialog(it)
+                viewModel.levelUpNotificationShown() // Notificar al ViewModel que el evento fue manejado
             }
+        })
+    }
+
+    /**
+     * Muestra un diálogo de felicitación cuando el alumno sube de nivel.
+     * @param newLevel El nuevo nivel alcanzado.
+     */
+    private fun showLevelUpDialog(newLevel: Int) {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.home_dialog_title_level_up))
+            .setMessage(getString(R.string.home_dialog_message_level_up, newLevel))
+            .setPositiveButton(getString(R.string.home_dialog_button_ok_level_up), null)
+            .setCancelable(false)
+            .show()
+    }
+
+    /**
+     * Navega a la pantalla de perfil del usuario.
+     */
+    private fun navigateToUserProfile() {
+        val userId = firebaseAuth.currentUser?.uid
+        if (userId != null) {
+            val intent = Intent(this, UserProfileActivity::class.java).apply {
+                putExtra(UserProfileActivity.EXTRA_USER_ID, userId)
+            }
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, getString(R.string.home_error_user_id_not_found), Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "Error en navigateToUserProfile: userId es nulo.")
         }
     }
 
+    /**
+     * Navega a la pantalla de Login ([MainActivity]) y finaliza esta actividad.
+     */
     private fun navigateToLogin() {
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -239,6 +278,7 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d("HomeActivity", "onDestroy called")
+        Log.d(TAG, "onDestroy: HomeActivity destruida.")
+        // El ViewModel (StudentHomeViewModel) se encarga de limpiar su listener de Firestore en su onCleared().
     }
 }

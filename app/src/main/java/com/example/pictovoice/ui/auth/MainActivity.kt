@@ -3,216 +3,175 @@ package com.example.pictovoice.ui.auth
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.View
+import android.view.View // Para View.VISIBLE/GONE
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer // Para observar LiveData
 import androidx.lifecycle.lifecycleScope
-import com.example.pictovoice.Data.Model.User // Importar User
-import com.example.pictovoice.Data.repository.AuthRepository
+import androidx.appcompat.app.AppCompatActivity
+import com.example.pictovoice.Data.repository.AuthRepository // Necesario para la Factory
+import com.example.pictovoice.R
 import com.example.pictovoice.databinding.ActivityMainBinding
-import com.example.pictovoice.ui.home.HomeActivity // Para rol estudiante
-import com.example.pictovoice.ui.teacher.TeacherHomeActivity // Para rol profesor
-import com.example.pictovoice.utils.AuthResult
-import com.example.pictovoice.utils.AuthViewModel
+import com.example.pictovoice.ui.home.HomeActivity
+import com.example.pictovoice.ui.teacher.TeacherHomeActivity
 import com.example.pictovoice.utils.AuthViewModelFactory
-import com.google.firebase.auth.FirebaseAuth
+import com.example.pictovoice.viewmodels.AuthResult
+import com.example.pictovoice.viewmodels.AuthViewModel
+// Eliminar import com.google.firebase.auth.FirebaseAuth (ya no se usa directamente aquí para el auto-login)
 import kotlinx.coroutines.launch
-// import java.util.Locale // Si lo usas para normalizar el input
 
+private const val TAG = "MainActivity" // Tag para Logs
+
+/**
+ * Activity principal de la aplicación.
+ * Funciona como la pantalla de inicio de sesión (login).
+ * También maneja la lógica inicial para verificar si un usuario ya está autenticado
+ * y redirigirlo a la pantalla correspondiente (Home del Alumno o Home del Profesor).
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val authRepository = AuthRepository() // Considera DI para el repo
-    private val viewModel: AuthViewModel by viewModels {
-        AuthViewModelFactory(authRepository)
+    // AuthRepository ya no se instancia aquí directamente si el ViewModel lo maneja todo.
+    // private val authRepository = AuthRepository()
+    private val authViewModel: AuthViewModel by viewModels {
+        // AuthRepository se instancia dentro de AuthViewModel ahora, o se inyecta en la factory.
+        // Si AuthViewModel lo instancia, no necesitas pasarlo aquí.
+        // Si tu AuthViewModelFactory requiere AuthRepository:
+        AuthViewModelFactory(AuthRepository())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        Log.d(TAG, "onCreate: Iniciando MainActivity.")
 
-        // --- INICIO: Lógica TEMPORAL para ejecutar la actualización UNA VEZ ---
-        // Descomenta el siguiente bloque para ejecutar la actualización de `fullNameLowercase`.
-        // Después de UNA ejecución exitosa, ¡COMENTA O ELIMINA ESTE BLOQUE DE NUEVO!
-        /*
-        lifecycleScope.launch {
-            Log.d("MainActivity_Backfill", "Iniciando backfill de fullNameLowercase para alumnos existentes...")
-            val firestoreRepo = FirestoreRepository() // Creamos una instancia para usar la función
-            val updateMessage = firestoreRepo.backfillFullNameLowercaseForAllStudents()
-            Toast.makeText(this@MainActivity, updateMessage, Toast.LENGTH_LONG).show()
-            Log.d("MainActivity_Backfill", "Backfill completado: $updateMessage")
-        }
-        */
-        // --- FIN: Lógica TEMPORAL ---
+        // ELIMINAR COMPLETAMENTE EL BLOQUE DE CÓDIGO TEMPORAL PARA BACKFILL
+        // Si aún estaba aquí.
 
+        // Iniciar el intento de auto-login a través del ViewModel
+        authViewModel.attemptAutoLogin()
 
-        // Comprobar si el usuario ya está logueado
-        if (authRepository.isUserLoggedIn()) {
-            Log.d("MainActivity", "Usuario previamente logueado. Intentando restaurar sesión...")
-            // authRepository.logout() // ¡COMENTA O ELIMINA ESTA LÍNEA!
-
-            // Ahora, en lugar de desloguear, vamos a cargar los datos del usuario
-            // y redirigir a la pantalla correspondiente.
-            // Puedes usar una corrutina para esto.
-            lifecycleScope.launch {
-                val uid = FirebaseAuth.getInstance().currentUser?.uid
-                if (uid != null) {
-                    // Aquí deberías tener una forma de obtener el objeto User completo
-                    // ya sea a través de AuthRepository o FirestoreRepository.
-                    // AuthRepository tiene un método login que devuelve User, pero para
-                    // un usuario ya logueado, necesitamos obtener sus datos de Firestore.
-                    // Usaremos FirestoreRepository directamente o un método específico en AuthRepository.
-
-                    // Opción A: Usar FirestoreRepository (si tienes una instancia disponible o la creas)
-                    // val firestoreRepo = FirestoreRepository()
-                    // val userResult = firestoreRepo.getUser(uid)
-
-                    // Opción B: Añadir un método a AuthRepository para obtener el User actual si ya está logueado
-                    // (Esta sería una mejor práctica para encapsular la lógica)
-                    // Por ahora, para hacerlo rápido, asumiremos que puedes obtener el User.
-                    // Necesitarás un método como `getCurrentUserProfile(uid: String)` en AuthRepository
-                    // o usar directamente FirestoreRepository.
-
-                    // --- INICIO: Lógica para cargar el usuario y redirigir ---
-                    // Vamos a usar el AuthRepository que ya tienes instanciado,
-                    // asumiendo que podría tener (o le añadimos) un método para esto.
-                    // Por simplicidad, y dado que getUser está en FirestoreRepository,
-                    // y AuthRepository ya tiene una instancia de Firestore,
-                    // podríamos llamar a getUser directamente si expones esa funcionalidad o
-                    // AuthRepository lo usa internamente.
-
-                    // La forma más directa con tu estructura actual es usar FirestoreRepository
-                    // pero MainActivity ya tiene una instancia de AuthRepository.
-                    // Vamos a simular que AuthRepository puede obtener el User.
-                    // Lo ideal sería que AuthViewModel manejara esto.
-
-                    // --- Bloque de código para restaurar sesión ---
-                    // (Este es similar al "BLOQUE DE AUTO-LOGIN SIMPLE" que tenías comentado)
-                    val userDocResult = com.example.pictovoice.Data.repository.FirestoreRepository().getUser(uid) // Creando instancia temporalmente
-                    // Lo ideal es inyectar o que AuthRepo lo haga
-
-                    if (userDocResult.isSuccess) {
-                        val user = userDocResult.getOrNull()
-                        if (user != null) {
-                            Toast.makeText(this@MainActivity, "Sesión restaurada para ${user.fullName}", Toast.LENGTH_SHORT).show()
-                            if (user.role == "teacher") {
-                                navigateToTeacherHome()
-                            } else {
-                                navigateToStudentHome()
-                            }
-                            finish() // Cierra MainActivity para que el usuario no vuelva aquí con "Atrás"
-                            return@launch // Salimos de la corrutina y de onCreate
-                        } else {
-                            // Usuario en Auth pero no en Firestore, o error de conversión
-                            Log.e("MainActivity", "Error al obtener datos del usuario desde Firestore.")
-                            // Considera desloguear para evitar un estado inconsistente
-                            authRepository.logout()
-                        }
-                    } else {
-                        // Error al obtener el documento del usuario
-                        Log.e("MainActivity", "Fallo al cargar el perfil del usuario: ${userDocResult.exceptionOrNull()?.message}")
-                        // Considera desloguear para evitar un estado inconsistente
-                        authRepository.logout()
-                    }
-                    // --- FIN: Lógica para cargar el usuario y redirigir ---
-                } else {
-                    // No hay UID aunque isUserLoggedIn sea true (raro, pero posible si el user de Firebase es null)
-                    Log.w("MainActivity", "isUserLoggedIn es true pero currentUser es null.")
-                    authRepository.logout() // Limpiar estado
-                }
-            }
-            // Si la corrutina no hizo return (porque falló la carga del usuario),
-            // la ejecución continuará y se mostrará la pantalla de login.
-            // Si la corrutina tuvo éxito y redirigió, esta parte no se alcanzará
-            // debido al return@launch. Sin embargo, para mayor claridad,
-            // el setup de listeners/observers debería estar en un 'else' del if(isUserLoggedIn).
-
-            // Para asegurar que setupListeners y setupObservers solo se llaman si no se redirige:
-            // (El return@launch dentro del if(uid != null) y if(userDocResult.isSuccess) ya se encarga de esto)
-            // Si la carga del usuario falla y la corrutina termina, se ejecutarán los setups de abajo.
-
-        }
-
-        // Estas líneas se ejecutarán siempre si el bloque de auto-login no redirige.
         setupListeners()
-        setupObservers()
+        setupObservers() // Los observadores manejarán la navegación o la muestra del login
     }
 
+    /**
+     * Configura los listeners para los elementos de la UI (botones de login y registro).
+     */
     private fun setupListeners() {
+        Log.d(TAG, "Configurando listeners...")
         binding.btnLogin.setOnClickListener {
             val identifier = binding.etUsername.text.toString().trim()
             val password = binding.etPassword.text.toString()
-
             if (validateInputs(identifier, password)) {
-                // El AuthRepository ahora maneja si es username o email
-                viewModel.login(identifier, password)
+                Log.d(TAG, "Botón Login pulsado. Identificador: $identifier")
+                authViewModel.login(identifier, password)
             }
         }
-
         binding.btnRegister.setOnClickListener {
+            Log.d(TAG, "Botón Registro pulsado.")
             startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
+    /**
+     * Configura los observadores para los LiveData del [AuthViewModel].
+     * Maneja las respuestas de las operaciones de login y auto-login.
+     */
     private fun setupObservers() {
-        lifecycleScope.launch {
-            // Observar loginResult (AuthResult<User>)
-            viewModel.loginResult.collect { result ->
-                // progressBarLogin.visibility = if (result.isLoading) ...
+        Log.d(TAG, "Configurando observadores...")
+        // Observador para el resultado del login manual
+        lifecycleScope.launch { // O puedes usar authViewModel.loginResult.observe(this, Observer { ... }) si prefieres
+            authViewModel.loginResult.collect { result ->
+                binding.progressBarLogin.visibility = if (result.isLoading) View.VISIBLE else View.GONE
+
                 when (result) {
                     is AuthResult.Success -> {
-                        // progressBarLogin.visibility = View.GONE
-                        val user = result.data // 'data' es ahora el objeto User
+                        val user = result.data
+                        Log.i(TAG, "Login Observer: Éxito para ${user.username}, Rol: ${user.role}")
                         Toast.makeText(this@MainActivity, "Login exitoso: ${user.fullName}", Toast.LENGTH_SHORT).show()
-                        if (user.role == "teacher") {
-                            navigateToTeacherHome()
-                        } else {
-                            navigateToStudentHome()
-                        }
+                        navigateToDashboard(user.role)
+                        // finish() // navigateToDashboard debería finalizar esta activity
                     }
                     is AuthResult.Error -> {
-                        // progressBarLogin.visibility = View.GONE
+                        Log.w(TAG, "Login Observer: Error - ${result.message}")
                         Toast.makeText(this@MainActivity, result.message, Toast.LENGTH_LONG).show()
                     }
-                    is AuthResult.Loading -> {
-                        // progressBarLogin.visibility = View.VISIBLE
-                        // Podrías mostrar un ProgressBar aquí
-                    }
-                    is AuthResult.Idle -> {
-                        // progressBarLogin.visibility = View.GONE
-                    }
+                    is AuthResult.Loading -> Log.d(TAG, "Login Observer: Cargando...")
+                    is AuthResult.Idle -> Log.d(TAG, "Login Observer: Idle.")
                 }
             }
         }
+
+        // Observador para el resultado del intento de auto-login
+        authViewModel.autoLoginResult.observe(this, Observer { result ->
+            // Podrías usar el mismo progressBarLogin o uno diferente si el feedback visual debe variar.
+            // binding.progressBarLogin.visibility = if (result is AuthResult.Loading) View.VISIBLE else View.GONE
+
+            when (result) {
+                is AuthResult.Success -> {
+                    val user = result.data
+                    Log.i(TAG, "AutoLogin Observer: Éxito para ${user.username}, Rol: ${user.role}")
+                    Toast.makeText(this@MainActivity, "Sesión restaurada para ${user.fullName}", Toast.LENGTH_SHORT).show()
+                    navigateToDashboard(user.role)
+                    // authViewModel.onAutoLoginEventHandled() // No es necesario si navegamos y finalizamos
+                }
+                is AuthResult.Error -> {
+                    // Si el auto-login falla (ej. usuario en Auth pero no en Firestore, o error de red),
+                    // nos quedamos en la pantalla de login. El error ya se logueó en el ViewModel.
+                    // Se podría mostrar un Toast discreto si se desea, pero a menudo es mejor no molestar al usuario
+                    // y simplemente mostrar la pantalla de login.
+                    Log.w(TAG, "AutoLogin Observer: Error - ${result.message}. Mostrando pantalla de login.")
+                    binding.progressBarLogin.visibility = View.GONE // Asegurar que el progress bar se oculta
+                    authViewModel.onAutoLoginEventHandled() // Resetear para futuros intentos si la activity sobrevive
+                }
+                is AuthResult.Loading -> {
+                    Log.d(TAG, "AutoLogin Observer: Cargando...")
+                    binding.progressBarLogin.visibility = View.VISIBLE
+                }
+                is AuthResult.Idle -> {
+                    Log.d(TAG, "AutoLogin Observer: Idle. Esperando acción del usuario (pantalla de login).")
+                    binding.progressBarLogin.visibility = View.GONE
+                }
+            }
+        })
     }
 
-    private fun navigateToStudentHome() {
-        val intent = Intent(this, HomeActivity::class.java)
+    /**
+     * Navega a la pantalla principal correspondiente según el rol del usuario
+     * (Home del Alumno o Home del Profesor) y finaliza esta MainActivity.
+     * @param role El rol del usuario ("student" o "teacher").
+     */
+    private fun navigateToDashboard(role: String) {
+        val intent = if (role == "teacher") {
+            Intent(this, TeacherHomeActivity::class.java)
+        } else {
+            Intent(this, HomeActivity::class.java)
+        }
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
-        finish()
+        finish() // Finalizar MainActivity para que no se pueda volver a ella con el botón "Atrás"
     }
 
-    private fun navigateToTeacherHome() {
-        val intent = Intent(this, TeacherHomeActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
-    }
-
+    /**
+     * Valida que los campos de identificador y contraseña no estén vacíos.
+     * Muestra errores en los TextInputLayout correspondientes si están vacíos.
+     * @param identifier El identificador ingresado (username o email).
+     * @param password La contraseña ingresada.
+     * @return `true` si ambos campos son válidos (no vacíos), `false` en caso contrario.
+     */
     private fun validateInputs(identifier: String, password: String): Boolean {
         var isValid = true
         if (identifier.isEmpty()) {
-            binding.tilUsername.error = "Ingresa tu usuario o correo electrónico"
+            binding.tilUsername.error = getString(R.string.login_error_identifier_required) // CORREGIDO
             isValid = false
         } else {
             binding.tilUsername.error = null
         }
 
         if (password.isEmpty()) {
-            binding.tilPassword.error = "Ingresa tu contraseña"
+            binding.tilPassword.error = getString(R.string.login_error_password_required) // CORREGIDO
             isValid = false
         } else {
             binding.tilPassword.error = null

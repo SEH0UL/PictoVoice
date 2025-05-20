@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:textStyle="bold"
-            tools:text="Clase 1ºA"
+            tools:text="Clase de Primero A"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/linearLayoutButtons"
@@ -37,29 +37,25 @@
 
             <ImageButton
                 android:id="@+id/btnEditClass"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="48dp" android:layout_height="48dp"
                 android:src="@drawable/ic_edit"
-                android:contentDescription="@string/editar_clase"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/teacher_item_cd_edit_class" android:background="?attr/selectableItemBackgroundBorderless"
                 app:tint="@color/primary_color"
                 android:layout_marginEnd="8dp"/>
 
             <ImageButton
                 android:id="@+id/btnDeleteClass"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:src="@drawable/ic_delete" android:contentDescription="@string/Delete_class"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="@color/teal_700" android:layout_marginEnd="8dp"/>
+                android:layout_width="48dp" android:layout_height="48dp"
+                android:src="@drawable/ic_delete"
+                android:contentDescription="@string/teacher_item_cd_delete_class" android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/color_warning" android:layout_marginEnd="8dp"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAccessClass"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/txtButtonAcceder" />
-        </LinearLayout>
+                android:text="@string/teacher_item_button_access" /> </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center_horizontal"
     android:padding="4dp"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
-    android:focusable="true">
-
-    <ImageView
-        android:id="@+id/ivSelectionPictogramImage"
-        android:layout_width="85dp"  android:layout_height="85dp" android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        tools:srcCompat="@drawable/ic_placeholder_image" />
-
-</LinearLayout>
+    android:focusable="true"
+    android:contentDescription="@string/cd_pictogram_item_prefix_dynamic"> <ImageView
+    android:id="@+id/ivSelectionPictogramImage"
+    android:layout_width="85dp"
+    android:layout_height="85dp"
+    android:scaleType="fitCenter"
+    android:adjustViewBounds="true"
+    tools:srcCompat="@drawable/ic_placeholder_image"
+    tools:ignore="ContentDescription" /> </LinearLayout>

@@ -37,11 +37,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Tu Perfil"
                 android:textAppearance="?attr/textAppearanceHeadline6"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Tu Perfil" />
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ivUserProfileImage"
@@ -49,49 +49,49 @@
                 android:layout_height="120dp"
                 android:layout_marginTop="16dp"
                 android:padding="4dp"
+                android:src="@drawable/ic_default_profile"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvProfileTitle"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
                 app:strokeColor="?attr/colorPrimaryDark"
-                app:strokeWidth="2dp"
-                android:src="@drawable/ic_default_profile"
-                app:layout_constraintTop_toBottomOf="@id/tvProfileTitle"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:contentDescription="Imagen de perfil del alumno" />
+                app:strokeWidth="2dp" />
+
             <TextView
                 android:id="@+id/tvUserProfileName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:textAppearance="?attr/textAppearanceHeadline5"
-                app:layout_constraintTop_toBottomOf="@id/ivUserProfileImage"
-                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                tools:text="Nombre Alumno" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/ivUserProfileImage"
+                tools:text="Nombre Alumno Completo" />
 
             <TextView
                 android:id="@+id/tvLabelNivel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="NIVEL"
+                android:text="@string/profile_label_level"
                 android:textAppearance="?attr/textAppearanceBody2"
                 android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@id/tvUserProfileName"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                app:layout_constraintTop_toBottomOf="@id/tvUserProfileName" />
 
             <TextView
                 android:id="@+id/tvLevelStart"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                tools:text="1"
                 android:textAppearance="?attr/textAppearanceBody1"
-                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintBottom_toBottomOf="@id/progressBarLevel"
                 app:layout_constraintEnd_toStartOf="@id/progressBarLevel"
+                app:layout_constraintHorizontal_chainStyle="packed"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@id/progressBarLevel"
-                app:layout_constraintBottom_toBottomOf="@id/progressBarLevel"/>
+                tools:text="1" />
 
             <ProgressBar
                 android:id="@+id/progressBarLevel"
@@ -99,148 +99,88 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:max="100"
-                tools:progress="60"
+                android:max="1000"
                 android:progressBackgroundTint="@android:color/darker_gray"
                 android:progressTint="@android:color/holo_green_dark"
-                app:layout_constraintTop_toBottomOf="@id/tvLabelNivel"
-                app:layout_constraintStart_toEndOf="@id/tvLevelStart"
                 app:layout_constraintEnd_toStartOf="@id/tvLevelEnd"
-                />
+                app:layout_constraintStart_toEndOf="@id/tvLevelStart"
+                app:layout_constraintTop_toBottomOf="@id/tvLabelNivel"
+                tools:progress="600" />
 
             <TextView
                 android:id="@+id/tvLevelEnd"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                tools:text="2"
                 android:textAppearance="?attr/textAppearanceBody1"
+                app:layout_constraintBottom_toBottomOf="@id/progressBarLevel"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/progressBarLevel"
                 app:layout_constraintTop_toTopOf="@id/progressBarLevel"
-                app:layout_constraintBottom_toBottomOf="@id/progressBarLevel"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                tools:text="2" />
 
             <GridLayout
                 android:id="@+id/gridLayoutStats"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:columnCount="2"
-                android:rowCount="2"
                 android:alignmentMode="alignMargins"
+                android:columnCount="2"
                 android:columnOrderPreserved="false"
-                app:layout_constraintTop_toBottomOf="@id/progressBarLevel"
+                android:rowCount="2"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
+                app:layout_constraintTop_toBottomOf="@id/progressBarLevel">
 
                 <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    android:layout_gravity="fill_horizontal"
-                    android:layout_margin="4dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#E0F2F1"> <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/palabras_usadas"
-                        android:textAppearance="?attr/textAppearanceBody2"/>
-                    <TextView
-                        android:id="@+id/tvPalabrasUsadasCount" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        tools:text="160"
-                        android:textAppearance="?attr/textAppearanceHeadline5"
-                        android:textStyle="bold"/>
-                </LinearLayout>
+                    style="@style/UserProfileStatCard">
+                    <LinearLayout style="@style/UserProfileStatLinearLayout">
+                        <TextView
+                            style="@style/UserProfileStatLabel"
+                            android:text="@string/profile_stats_words_used_label" />
+                        <TextView
+                            android:id="@+id/tvPalabrasUsadasCount"
+                            style="@style/UserProfileStatCount"
+                            tools:text="160" />
+                    </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    android:layout_gravity="fill_horizontal"
-                    android:layout_margin="4dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#E0F2F1"> <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/frases_creadas"
-                        android:textAppearance="?attr/textAppearanceBody2"/>
-                    <TextView
-                        android:id="@+id/tvFrasesCreadasCount" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        tools:text="25"
-                        android:textAppearance="?attr/textAppearanceHeadline5"
-                        android:textStyle="bold"/>
-                </LinearLayout>
+                    style="@style/UserProfileStatCard">
+                    <LinearLayout style="@style/UserProfileStatLinearLayout">
+                        <TextView
+                            style="@style/UserProfileStatLabel"
+                            android:text="@string/profile_stats_phrases_created_label" />
+                        <TextView
+                            android:id="@+id/tvFrasesCreadasCount"
+                            style="@style/UserProfileStatCount"
+                            tools:text="25" />
+                    </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    android:layout_gravity="fill_horizontal"
-                    android:layout_margin="4dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#E0F2F1"> <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/palabras_disponibles"
-                        android:textAppearance="?attr/textAppearanceBody2"/>
-                    <TextView
-                        android:id="@+id/tvPalabrasDisponiblesCount" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        tools:text="80"
-                        android:textAppearance="?attr/textAppearanceHeadline5"
-                        android:textStyle="bold"/>
-                </LinearLayout>
+                    style="@style/UserProfileStatCard">
+                    <LinearLayout style="@style/UserProfileStatLinearLayout">
+                        <TextView
+                            style="@style/UserProfileStatLabel"
+                            android:text="@string/profile_stats_words_available_label" />
+                        <TextView
+                            android:id="@+id/tvPalabrasDisponiblesCount"
+                            style="@style/UserProfileStatCount"
+                            tools:text="80" />
+                    </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    android:layout_gravity="fill_horizontal"
-                    android:layout_margin="4dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFCDD2"> <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
+                    style="@style/UserProfileStatCard"
+                    app:cardBackgroundColor="#FFEBEE"> <LinearLayout style="@style/UserProfileStatLinearLayout">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/palabras_bloqueadas" android:textAppearance="?attr/textAppearanceBody2"/>
+                        style="@style/UserProfileStatLabel"
+                        android:text="@string/profile_stats_words_locked_label" />
                     <TextView
-                        android:id="@+id/tvPalabrasBloqueadasCount" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        tools:text="120"
-                        android:textAppearance="?attr/textAppearanceHeadline5"
-                        android:textStyle="bold"/>
+                        android:id="@+id/tvPalabrasBloqueadasCount"
+                        style="@style/UserProfileStatCount"
+                        tools:text="120" />
                 </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -252,13 +192,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                tools:text="Solicitar Palabras (Nivel 2)"
-                app:icon="@drawable/ic_stars"
                 android:visibility="gone"
-                tools:visibility="visible"
-                app:layout_constraintTop_toBottomOf="@id/gridLayoutStats"
+                app:icon="@drawable/ic_stars"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                app:layout_constraintTop_toBottomOf="@id/gridLayoutStats"
+                tools:text="@string/profile_button_request_words_level"
+                tools:visibility="visible" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDesbloquearPalabrasProfesor"
@@ -266,28 +206,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                tools:text="Desbloquear Palabras (Nivel 1)"
+                android:visibility="gone"
                 app:icon="@drawable/ic_unlock"
-                android:visibility="gone"
-                tools:visibility="visible"
-                app:layout_constraintTop_toBottomOf="@id/btnSolicitarPalabras"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnGenerarInformeProfesor"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Generar Informe PDF"
-                app:icon="@drawable/ic_picture_as_pdf"
-                android:visibility="gone"
-                tools:visibility="visible"
-                app:layout_constraintTop_toBottomOf="@id/btnDesbloquearPalabrasProfesor"
-                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:layout_marginBottom="16dp"/>
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btnSolicitarPalabras"
+                tools:text="@string/profile_button_approve_request_level"
+                tools:visibility="visible" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnUserLogout"
@@ -296,13 +221,16 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="16dp"
-                android:text="Cerrar Sesión"
-                app:icon="@drawable/ic_logout" android:textColor="?attr/colorError"
+                android:text="@string/profile_button_logout"
+                android:textColor="?attr/colorError"
+                app:icon="@drawable/ic_logout"
                 app:strokeColor="?attr/colorError"
-                android:visibility="gone" app:layout_constraintTop_toBottomOf="@id/btnGenerarInformeProfesor"
-                app:layout_constraintStart_toStartOf="parent"
+                android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btnDesbloquearPalabrasProfesor"
+                app:layout_constraintBottom_toBottomOf="parent"
+                tools:visibility="visible" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

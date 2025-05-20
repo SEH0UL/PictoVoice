@@ -1,29 +1,139 @@
 <resources>
     <string name="app_name">PictoVoice</string>
-    <string name="Usuario">Usuario</string>
     <string name="app_logo">Logo PictoVoice</string>
-    <string name="Password">Contraseña</string>
-    <string name="btn_Login">Iniciar Sesión</string>
-    <string name="btn_register">Registrarse</string>
-    <string name="error_username">Ingrese su nombre de usuario</string>
-    <string name="error_username_length">Min. 4 caracteres</string>
-    <string name="Name">Nombre</string>
-    <string name="Password2">Confirmar Contraseña</string>
-    <string name="user_email">Usuario o Correo Electrónico</string>
-    <string name="Cod_Teacher_Register">Código de profesor</string>
-    <string name="Rol_Teacher">Soy profesor</string>
-    <string name="Rol_Alumno">Soy alumno</string>
-    <string name="Email_Register">Correo Electrónico</string>
-    <string name="Delete_Pictogram">Borrar último pictograma</string>
-    <string name="editar_clase">Editar Clase</string>
-    <string name="Delete_class">Eliminar Clase</string>
-    <string name="txtButtonAcceder">Acceder</string>
-    <string name="teacher_name_not_found">Nombre de profesor no encontrado</string>
-    <string name="title_activity_class_detail">Detalles de la Clase</string>
-    <string name="solicitar_palabras_placeholder">Solicitar Palabras (Nivel %1$d)</string>
-    <string name="desbloquear_palabras_placeholder">Desbloquear Palabras (Nivel %1$d)</string>
-    <string name="frases_creadas">Frases Creadas:</string>
-    <string name="palabras_usadas">Palabras usadas:</string>
-    <string name="palabras_disponibles">Palabras disponibles:</string>
-    <string name="palabras_bloqueadas">Palabras bloqueadas:</string>
+
+    <string name="dialog_button_ok">Entendido</string>
+    <string name="dialog_button_cancel">Cancelar</string>
+    <string name="dialog_button_save">Guardar</string>
+    <string name="dialog_button_create">Crear</string>
+    <string name="dialog_button_yes_delete">Sí, eliminar</string>
+    <string name="dialog_button_yes_add">Sí, Añadir</string>
+    <string name="dialog_button_yes_approve">Sí, Aprobar</string>
+    <string name="dialog_button_yes_logout">Sí, cerrar sesión</string>
+    <string name="feature_not_implemented_pdf">Funcionalidad \'Generar Informe PDF\' pendiente.</string>
+
+    <string name="login_identifier_hint">Usuario o Correo Electrónico</string>
+    <string name="login_password_hint">Contraseña</string>
+    <string name="login_button_login">Iniciar Sesión</string>
+    <string name="login_button_register">Registrarse</string>
+    <string name="login_error_identifier_required">Ingresa tu usuario o correo electrónico</string>
+    <string name="login_error_password_required">Ingresa tu contraseña</string>
+    <string name="toast_session_restored">Sesión restaurada para %1$s</string>
+    <string name="toast_login_success">Login exitoso: %1$s</string>
+
+    <string name="register_fullname_hint">Nombre Completo</string>
+    <string name="register_email_hint">Correo Electrónico</string>
+    <string name="register_confirm_password_hint">Confirmar Contraseña</string>
+    <string name="register_role_student">Soy alumno</string>
+    <string name="register_role_teacher">Soy profesor</string>
+    <string name="register_teacher_code_hint">Código de profesor</string>
+    <string name="register_button_login_redirect">¿Ya tienes cuenta? Inicia Sesión</string>
+
+    <string name="register_error_fullname_required">Ingresa tu nombre completo</string>
+    <string name="register_error_fullname_at_least_two_words">Ingresa al menos un nombre y un apellido</string>
+    <string name="register_error_email_required">Ingresa tu correo electrónico</string>
+    <string name="register_error_email_invalid">Correo electrónico no válido</string>
+    <string name="register_error_password_min_length">La contraseña debe tener al menos %1$d caracteres</string>
+    <string name="register_error_password_mismatch">Las contraseñas no coinciden</string>
+    <string name="register_error_teacher_code_required">Ingresa el código de profesor</string>
+    <string name="register_error_teacher_code_incorrect">Código de profesor incorrecto</string>
+
+    <string name="register_dialog_title_success">¡Registro Exitoso!</string>
+    <string name="register_dialog_message_success">Tu cuenta ha sido creada.\nTu nombre de usuario es: %1$s\n\nSerás redirigido a la pantalla de inicio de sesión.</string>
+
+    <string name="home_label_categories">Carpetas</string>
+    <string name="home_label_fixed_elements">Fijos</string>
+    <string name="home_label_pronouns">Pronombres:</string>
+    <string name="home_label_fixed_verbs">Verbos:</string>
+    <string name="home_cd_delete_pictogram">Borrar último pictograma</string>
+    <string name="home_cd_play_phrase">Reproducir frase</string>
+    <string name="home_cd_user_profile">Ver Perfil</string>
+    <string name="home_default_category_name_placeholder">Comida</string>
+    <string name="home_no_categories_available">Categorías no disponibles</string>
+    <string name="home_no_unlocked_categories">No hay categorías desbloqueadas</string>
+
+    <string name="home_dialog_title_clear_phrase">Borrar Frase</string>
+    <string name="home_dialog_message_clear_phrase">¿Estás seguro de que quieres borrar toda la frase?</string>
+    <string name="home_dialog_button_yes_clear">Sí, borrar</string>
+
+    <string name="home_dialog_title_level_up">¡Has subido de Nivel!</string>
+    <string name="home_dialog_message_level_up">¡Felicidades! Has alcanzado el Nivel %1$d.</string>
+    <string name="home_dialog_button_ok_level_up">¡Genial!</string>
+    <string name="home_error_user_id_not_found">Error: No se pudo obtener el ID del usuario.</string>
+
+    <string name="profile_title_loading">Cargando Perfil...</string>
+    <string name="profile_title_own">Mi Perfil</string>
+    <string name="profile_title_student_by_teacher">Perfil del Alumno</string>
+    <string name="profile_title_student_dynamic">Perfil de %1$s</string>
+    <string name="profile_title_generic">Perfil de Usuario</string>
+    <string name="profile_label_level">NIVEL</string>
+
+    <string name="profile_stats_words_used_label">Palabras usadas:</string> <string name="profile_stats_phrases_created_label">Frases Creadas:</string> <string name="profile_stats_words_available_label">Palabras disponibles:</string> <string name="profile_stats_words_locked_label">Palabras bloqueadas:</string> <string name="profile_button_request_words_level">Solicitar Palabras (Nivel %1$d)</string>
+    <string name="profile_button_request_sent">Solicitud Enviada</string>
+    <string name="profile_button_words_requested_for_level">Palabras del Nivel %1$d Solicitadas</string>
+    <string name="profile_button_approve_request_level">Aprobar Solicitud (Nivel %1$d)</string>
+    <string name="profile_button_words_approved_level">Palabras Aprobadas (Nivel %1$d)</string>
+    <string name="profile_button_generate_report">Generar Informe PDF</string>
+    <string name="profile_button_logout">Cerrar Sesión</string>
+
+    <string name="profile_dialog_title_approve_request">Aprobar Solicitud</string>
+    <string name="profile_dialog_message_approve_request_confirm">¿Estás seguro de que quieres aprobar la solicitud de palabras para este alumno?</string>
+
+    <string name="profile_error_user_id_not_found">ID de usuario del perfil no encontrado.</string>
+    <string name="profile_error_viewer_id_not_found">No se pudo identificar al observador del perfil.</string>
+    <string name="profile_error_fetching_viewer_role">Error al obtener el rol del observador.</string>
+
+    <string name="teacher_home_my_classes_label">Mis Clases</string>
+    <string name="teacher_home_button_create_new_class">+ Crear Nueva Clase</string>
+    <string name="teacher_home_teacher_name_placeholder">Nombre del Profesor</string>
+    <string name="teacher_home_toast_class_created_successfully">Clase creada exitosamente</string>
+    <string name="teacher_home_toast_error_creating_class">Error al crear clase: %1$s</string>
+    <string name="teacher_home_toast_class_deleted_successfully">Clase eliminada exitosamente</string>
+    <string name="teacher_home_toast_error_deleting_class">Error al eliminar clase: %1$s</string>
+    <string name="teacher_home_toast_no_changes_detected">No se detectaron cambios.</string>
+
+    <string name="teacher_home_dialog_title_create_class">Crear Nueva Clase</string>
+    <string name="teacher_home_dialog_title_edit_class">Editar Clase</string>
+    <string name="teacher_home_dialog_title_delete_class">Eliminar Clase</string>
+    <string name="teacher_home_dialog_message_delete_class">¿Estás seguro de que quieres eliminar la clase \"%1$s\"? Esta acción no se puede deshacer.</string>
+    <string name="teacher_home_error_classname_required">El nombre de la clase no puede estar vacío</string>
+
+    <string name="teacher_item_button_access">Acceder</string>
+    <string name="teacher_item_cd_edit_class">Editar Clase</string> <string name="teacher_item_cd_delete_class">Eliminar Clase</string> <string name="class_detail_title_activity_manifest">Detalles de la Clase</string> <string name="class_detail_title_activity_default">Detalles de Clase</string> <string name="class_detail_search_students_hint">Buscar alumno por nombre...</string>
+    <string name="class_detail_button_add_student_tooltip">Añadir alumno a la clase</string>
+    <string name="class_detail_info_no_students_in_class">No hay alumnos en esta clase.</string>
+    <string name="class_detail_info_no_students_match_search">Ningún alumno coincide con la búsqueda.</string>
+    <string name="class_detail_info_no_available_students_found_search">No se encontraron alumnos disponibles con ese nombre.</string>
+    <string name="class_detail_info_type_to_search_students">Introduce un nombre para buscar alumnos.</string>
+
+    <string name="class_detail_toast_student_removed_successfully">Alumno eliminado de la clase.</string>
+    <string name="class_detail_toast_error_removing_student">Error al eliminar alumno: %1$s</string>
+    <string name="class_detail_toast_student_added_successfully">Alumno añadido a la clase exitosamente.</string>
+    <string name="class_detail_toast_error_adding_student">Error al añadir alumno: %1$s</string>
+    <string name="class_detail_toast_error_searching_students">Error buscando alumnos: %1$s</string>
+    <string name="class_detail_error_class_id_missing">Error: ID de la clase no encontrado.</string>
+
+    <string name="class_detail_dialog_title_add_student">Añadir Alumno a la Clase</string>
+    <string name="class_detail_dialog_title_confirm_add_student">Confirmar Añadir Alumno</string>
+    <string name="class_detail_dialog_message_confirm_add_student">¿Estás seguro de que quieres añadir a %1$s (@%2$s) a esta clase?</string>
+    <string name="class_detail_dialog_title_remove_student">Eliminar Alumno</string>
+    <string name="class_detail_dialog_message_remove_student">¿Estás seguro de que quieres eliminar a %1$s de esta clase?</string>
+
+    <string name="logout_dialog_title">Cerrar Sesión</string>
+    <string name="logout_dialog_message_confirm">¿Estás seguro de que quieres cerrar sesión?</string>
+    <string name="toast_session_closed_generic">Sesión cerrada.</string>
+
+    <string name="username_prefix_at">\u0040%1$s</string>
+
+    <string name="class_detail_dialog_button_yes_remove">Sí, Eliminar</string>
+
+    <string name="hint_class_name">Nombre de la Clase</string>
+    <string name="cd_student_profile_icon">Icono del alumno</string>
+    <string name="cd_category_folder_prefix_dynamic">Carpeta de categoría %1$s</string>
+    <string name="cd_pictogram_item_prefix_dynamic">Pictograma: %1$s</string>
+    <string name="cd_pictogram_in_phrase_prefix_dynamic">Pictograma en frase: %1$s</string>
+    <string name="cd_student_profile_icon_in_list">Icono de perfil del alumno</string>
+    <string name="cd_student_notification_status">Estado de notificación del alumno</string>
+    <string name="cd_remove_student_from_class">Eliminar alumno de la clase</string>
+
 </resources>

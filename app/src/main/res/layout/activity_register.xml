@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    android:padding="16dp">
+    android:padding="16dp"
+    tools:context=".ui.auth.RegisterActivity">
 
     <LinearLayout
         android:id="@+id/llButtonsContainer"
@@ -19,15 +21,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:backgroundTint="@color/color_btn_register"
-            android:text="@string/btn_register" />
-
-        <Button
-            android:id="@+id/btnLoginRedirect"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/color_btn_login"
-            android:text="@string/btn_Login" />
-    </LinearLayout>
+            android:text="@string/login_button_register" /> <Button
+        android:id="@+id/btnLoginRedirect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/color_btn_login"
+        android:text="@string/register_button_login_redirect" /> </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -41,7 +40,6 @@
             android:orientation="vertical"
             android:gravity="center_horizontal">
 
-            <!-- Logo de la app (centrado) -->
             <ImageView
                 android:id="@+id/ivLogo"
                 android:layout_width="200dp"
@@ -49,8 +47,7 @@
                 android:layout_marginTop="36dp"
                 android:layout_marginBottom="16dp"
                 android:src="@drawable/logo_pictovoice"
-                android:contentDescription="@string/app_logo"
-                android:scaleType="fitCenter"/>
+                android:contentDescription="@string/app_logo" android:scaleType="fitCenter"/>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilFullName"
@@ -65,8 +62,7 @@
                     android:id="@+id/etFullName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/Name"
-                    android:inputType="textPersonName|textCapWords"
+                    android:hint="@string/register_fullname_hint" android:inputType="textPersonName|textCapWords"
                     android:maxLines="1"/>
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -77,15 +73,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 app:errorEnabled="true"
-                app:startIconDrawable="@android:drawable/ic_dialog_email">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etEmail"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/Email_Register"
-                    android:inputType="textEmailAddress"
-                    android:maxLines="1"/>
+                app:startIconDrawable="@android:drawable/ic_dialog_email"> <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/register_email_hint" android:inputType="textEmailAddress"
+                android:maxLines="1"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -101,8 +94,7 @@
                     android:id="@+id/etPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/Password"
-                    android:inputType="textPassword"/>
+                    android:hint="@string/login_password_hint" android:inputType="textPassword"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -118,8 +110,7 @@
                     android:id="@+id/etConfirmPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/Password2"
-                    android:inputType="textPassword"/>
+                    android:hint="@string/register_confirm_password_hint" android:inputType="textPassword"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <RadioGroup
@@ -134,43 +125,36 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/Rol_Alumno"
-                    android:checked="true"/>
+                    android:text="@string/register_role_student" android:checked="true"/>
 
                 <RadioButton
                     android:id="@+id/rbTeacher"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/Rol_Teacher"/>
-            </RadioGroup>
+                    android:text="@string/register_role_teacher"/> </RadioGroup>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilTeacherCode"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="8dp"
-                android:visibility="gone">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etTeacherCode"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/Cod_Teacher_Register"
-                    android:inputType="textPassword" />
-            </com.google.android.material.textfield.TextInputLayout>
+                android:layout_height="wrap_content" android:layout_marginBottom="8dp"
+                android:visibility="gone"
+                tools:visibility="visible"> <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etTeacherCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/register_teacher_code_hint" android:inputType="textPassword" /> </com.google.android.material.textfield.TextInputLayout>
 
             <ProgressBar
                 android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleLarge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="16dp"
                 android:visibility="gone"
-                style="?android:attr/progressBarStyleLarge"/>
-
-        </LinearLayout>
+                tools:visibility="visible"/> </LinearLayout>
     </ScrollView>
 </RelativeLayout>

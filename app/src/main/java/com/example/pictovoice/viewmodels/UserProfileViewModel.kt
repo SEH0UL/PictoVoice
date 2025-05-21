@@ -6,9 +6,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pictovoice.Data.datasource.PictogramDataSource
+import com.example.pictovoice.Data.model.Pictogram
 import com.example.pictovoice.Data.repository.FirestoreRepository
-import com.example.pictovoice.data.datasource.PictogramDataSource
-import com.example.pictovoice.data.model.Pictogram
 import com.example.pictovoice.utils.Result
 import kotlinx.coroutines.launch
 
@@ -31,7 +31,6 @@ class UserProfileViewModel(
     private val _userProfile = MutableLiveData<User?>()
     val userProfile: LiveData<User?> get() = _userProfile
 
-    // LiveData para estadísticas
     private val _wordsUsedCount = MutableLiveData<Int>(0)
     val wordsUsedCount: LiveData<Int> get() = _wordsUsedCount
     private val _phrasesCreatedCount = MutableLiveData<Int>(0)
@@ -45,23 +44,20 @@ class UserProfileViewModel(
     val isLoading: LiveData<Boolean> get() = _isLoading
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
-
-    // Para el botón "Solicitar Palabras" del alumno
     private val _canRequestWords = MutableLiveData<Boolean>(false)
     val canRequestWords: LiveData<Boolean> get() = _canRequestWords
-    private val _wordRequestOutcome = MutableLiveData<Result<Unit>?>() // Evento para el resultado de la solicitud
+    private val _wordRequestOutcome = MutableLiveData<Result<Unit>?>()
     val wordRequestOutcome: LiveData<Result<Unit>?> get() = _wordRequestOutcome
-
-    // Para el botón "Aprobar Solicitud/Desbloquear Palabras" del profesor
-    private val _approveWordRequestOutcome = MutableLiveData<Result<Unit>?>() // Evento para el resultado de la aprobación
+    private val _approveWordRequestOutcome = MutableLiveData<Result<Unit>?>()
     val approveWordRequestOutcome: LiveData<Result<Unit>?> get() = _approveWordRequestOutcome
 
-    // Obtiene la lista completa de pictogramas desde la fuente de datos centralizada.
     private fun getSystemPictogramList(): List<Pictogram> {
+        // Asegúrate de que PictogramDataSource.getAllPictograms() está completamente poblado.
         return PictogramDataSource.getAllPictograms()
     }
 
     init {
+        // loadUserProfile se llama en init y también en onResume de la Activity para asegurar frescura.
         loadUserProfile()
     }
 
@@ -75,16 +71,17 @@ class UserProfileViewModel(
         viewModelScope.launch {
             try {
                 Log.d(TAG, "Cargando perfil para usuario: $targetUserId")
-                val result = firestoreRepository.getUser(targetUserId)
+                val result = firestoreRepository.getUser(targetUserId) // Esta es una lectura única.
                 if (result.isSuccess) {
                     val user = result.getOrNull()
+                    Log.i(TAG, "Perfil cargado desde Firestore para UserProfile: User=$user")
                     _userProfile.value = user
 
                     // Actualizar estadísticas almacenadas directamente desde el objeto User
                     _wordsUsedCount.value = user?.wordsUsedCount ?: 0
                     _phrasesCreatedCount.value = user?.phrasesCreatedCount ?: 0
+                    Log.i("UserProfileVM", "Estadísticas parseadas: Usadas=${_wordsUsedCount.value}, Frases=${_phrasesCreatedCount.value}")
 
-                    // Calcular y actualizar estadísticas dinámicas (disponibles/bloqueadas)
                     if (user != null) {
                         val allPictogramsInSystem = getSystemPictogramList()
                         if (allPictogramsInSystem.isNotEmpty()) {
@@ -96,25 +93,24 @@ class UserProfileViewModel(
                             }
                             _availableWordsCount.value = availablePictos.size
                             _lockedWordsCount.value = allPictogramsInSystem.size - availablePictos.size
-                            Log.d(TAG, "Estadísticas Calculadas: TotalSistema=${allPictogramsInSystem.size}, NivelUsuario=${user.currentLevel}, MaxNivelAprobado=$maxApprovedLevel, CarpetasDesbloq=${userUnlockedCategoryIds.joinToString()}, Disp=${_availableWordsCount.value}, Bloq=${_lockedWordsCount.value}")
+
+                            Log.d(TAG, "Estadísticas Calculadas: TotalSistema=${allPictogramsInSystem.size}, UserLvl=${user.currentLevel}, MaxNivelAprobado=$maxApprovedLevel, UnlockedFolders=${userUnlockedCategoryIds.joinToString()}, Disp=${_availableWordsCount.value}, Bloq=${_lockedWordsCount.value}")
                         } else {
                             _availableWordsCount.value = 0
                             _lockedWordsCount.value = 0
-                            Log.w(TAG, "getSystemPictogramList() devolvió vacío. Estadísticas calculadas serán 0.")
+                            Log.w(TAG, "getSystemPictogramList() devolvió vacío. Estadísticas disponibles/bloqueadas serán 0.")
                         }
-                    } else { // user es null
+                    } else {
                         _availableWordsCount.value = 0
                         _lockedWordsCount.value = 0
                     }
 
-                    // Determinar si el alumno puede solicitar palabras
                     _canRequestWords.value = user?.role == "student" &&
                             user.hasPendingWordRequest == false &&
                             (user.currentLevel > user.levelWordsRequestedFor)
                     Log.d(TAG, "Puede solicitar palabras: ${_canRequestWords.value}")
                 } else {
                     _errorMessage.value = "Error al cargar el perfil: ${result.exceptionOrNull()?.message}"
-                    // Resetear estadísticas si falla la carga del perfil
                     resetStatsToZero()
                 }
             } catch (e: Exception) {
@@ -156,13 +152,12 @@ class UserProfileViewModel(
                 val result = firestoreRepository.recordStudentWordRequest(targetUserId, currentUser.currentLevel)
                 if (result.isSuccess) {
                     _wordRequestOutcome.value = Result.Success(Unit)
-                    // Actualizar localmente el perfil para reflejar la solicitud y re-evaluar 'canRequestWords'
                     val updatedUser = currentUser.copy(
                         hasPendingWordRequest = true,
                         levelWordsRequestedFor = currentUser.currentLevel
                     )
-                    _userProfile.value = updatedUser // Esto disparará la reevaluación de _canRequestWords en el observer de userProfile
-                    _canRequestWords.value = false // O directamente aquí para inmediatez
+                    _userProfile.value = updatedUser
+                    _canRequestWords.value = false
                     _errorMessage.value = "Solicitud de palabras enviada para el Nivel ${currentUser.currentLevel}."
                 } else {
                     _errorMessage.value = "Error al enviar la solicitud: ${result.exceptionOrNull()?.message}"
@@ -206,9 +201,7 @@ class UserProfileViewModel(
                 val result = firestoreRepository.approveWordRequestAndSetContentLevel(targetUserId, levelToApproveContentFor)
                 if (result.isSuccess) {
                     _approveWordRequestOutcome.value = Result.Success(Unit)
-                    // Volver a cargar el perfil para reflejar todos los cambios y recalcular todo,
-                    // incluyendo estadísticas y el estado de 'canRequestWords'.
-                    loadUserProfile()
+                    loadUserProfile() // Recargar para reflejar cambios y recalcular stats/canRequest
                     _errorMessage.value = "Contenido para Nivel $levelToApproveContentFor aprobado para ${studentUser.fullName}."
                 } else {
                     _errorMessage.value = "Error al aprobar la solicitud: ${result.exceptionOrNull()?.message}"

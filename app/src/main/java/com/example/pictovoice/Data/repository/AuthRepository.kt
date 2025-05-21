@@ -1,8 +1,8 @@
-package com.example.pictovoice.Data.repository // o com.example.pictovoice.data.repository
+package com.example.pictovoice.Data.repository // o com.example.pictovoice.Data.repository
 
 import User
 import android.util.Log
-import com.example.pictovoice.data.datasource.PictogramDataSource
+import com.example.pictovoice.Data.datasource.PictogramDataSource
 import com.google.firebase.Timestamp
 
 import com.google.firebase.auth.FirebaseAuth
@@ -190,7 +190,7 @@ class AuthRepository {
                 lastLogin = Timestamp.now(),
                 unlockedCategories = initialUserCategories,
                 maxContentLevelApproved = if (role == "student") 1 else 0 // Nivel 1 de contenido aprobado por defecto para alumnos
-                // los demás campos numéricos y booleanos se inicializan con sus valores por defecto del data class User
+                // los demás campos numéricos y booleanos se inicializan con sus valores por defecto del Data class User
             )
 
             usersCollection.document(firebaseUser.uid).set(newUser.toMap()).await()

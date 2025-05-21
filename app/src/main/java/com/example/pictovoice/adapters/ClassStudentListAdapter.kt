@@ -118,7 +118,7 @@ class ClassStudentListAdapter(
         }
 
         override fun areContentsTheSame(oldItem: User, newItem: User): Boolean {
-            // El data class User ya implementa equals() basado en todas sus propiedades,
+            // El Data class User ya implementa equals() basado en todas sus propiedades,
             // lo que es correcto para determinar si el contenido ha cambiado.
             return oldItem == newItem
         }

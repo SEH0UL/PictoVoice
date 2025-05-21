@@ -8,7 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.pictovoice.Data.repository.FirestoreRepository
-import com.example.pictovoice.data.model.Classroom // Asegúrate que el path del import es correcto
+import com.example.pictovoice.Data.model.Classroom // Asegúrate que el path del import es correcto
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Date

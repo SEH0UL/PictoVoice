@@ -1,7 +1,7 @@
-package com.example.pictovoice.data.datasource
+package com.example.pictovoice.Data.datasource
 
-import com.example.pictovoice.data.model.Category
-import com.example.pictovoice.data.model.Pictogram
+import com.example.pictovoice.Data.model.Category
+import com.example.pictovoice.Data.model.Pictogram
 import com.example.pictovoice.R
 
 /**

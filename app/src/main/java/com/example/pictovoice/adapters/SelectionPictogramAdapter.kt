@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pictovoice.R
-import com.example.pictovoice.data.model.Pictogram // Asegúrate que el path a Pictogram es correcto
+import com.example.pictovoice.Data.model.Pictogram // Asegúrate que el path a Pictogram es correcto
 import com.example.pictovoice.databinding.ItemPictogramSelectionBinding
 
 /**

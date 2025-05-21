@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.pictovoice.data.model.Classroom // Asegúrate que el path a Classroom es correcto
+import com.example.pictovoice.Data.model.Classroom // Asegúrate que el path a Classroom es correcto
 import com.example.pictovoice.databinding.ItemTeacherClassBinding
 
 /**
@@ -101,7 +101,7 @@ class TeacherClassesAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Classroom, newItem: Classroom): Boolean {
-            // El data class Classroom ya implementa equals() basado en todas sus propiedades.
+            // El Data class Classroom ya implementa equals() basado en todas sus propiedades.
             return oldItem == newItem
         }
     }

@@ -64,7 +64,7 @@ class AuthViewModel(
     private val _registerResult = MutableStateFlow<AuthResult<String>>(AuthResult.Idle)
     /**
      * [StateFlow] que emite el resultado de la operación de registro.
-     * En caso de éxito, `data` es el nombre de usuario [String] generado.
+     * En caso de éxito, `Data` es el nombre de usuario [String] generado.
      */
     val registerResult: StateFlow<AuthResult<String>> get() = _registerResult
 

@@ -1,4 +1,4 @@
-package com.example.pictovoice.data.model
+package com.example.pictovoice.Data.model
 
 
 import android.util.Log

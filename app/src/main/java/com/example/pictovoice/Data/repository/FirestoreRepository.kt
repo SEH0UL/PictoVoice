@@ -1,9 +1,9 @@
-package com.example.pictovoice.Data.repository // o com.example.pictovoice.data.repository
+package com.example.pictovoice.Data.repository // o com.example.pictovoice.Data.repository
 
 import User
 import android.util.Log
-import com.example.pictovoice.data.datasource.PictogramDataSource // Importar para las constantes de ID
-import com.example.pictovoice.data.model.Classroom
+import com.example.pictovoice.Data.datasource.PictogramDataSource // Importar para las constantes de ID
+import com.example.pictovoice.Data.model.Classroom
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -398,7 +398,7 @@ class FirestoreRepository {
                 if (newLevel >= 100 && newCurrentExp >= expNeededForNextLevel) {
                     newCurrentExp = expNeededForNextLevel -1
                 }
-
+                transaction.update(userDocRef, "currentExp", newCurrentExp)
                 transaction.update(userDocRef, "currentExp", newCurrentExp.toLong())
                 transaction.update(userDocRef, "totalExp", newTotalExp.toLong())
                 transaction.update(userDocRef, "currentLevel", newLevel.toLong())

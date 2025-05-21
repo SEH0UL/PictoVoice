@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pictovoice.R
-import com.example.pictovoice.data.model.Pictogram
+import com.example.pictovoice.Data.model.Pictogram
 import com.example.pictovoice.databinding.ItemPictogramFixedBinding
 
 /**
@@ -90,7 +90,7 @@ class FixedPictogramAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Pictogram, newItem: Pictogram): Boolean {
-            // El data class Pictogram (simplificado) ya implementa equals()
+            // El Data class Pictogram (simplificado) ya implementa equals()
             // basado en todas sus propiedades relevantes para el contenido.
             return oldItem == newItem
         }

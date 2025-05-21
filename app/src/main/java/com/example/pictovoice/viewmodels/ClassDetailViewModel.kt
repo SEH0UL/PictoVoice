@@ -8,7 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.pictovoice.Data.repository.FirestoreRepository
-import com.example.pictovoice.data.model.Classroom
+import com.example.pictovoice.Data.model.Classroom
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -70,7 +70,7 @@ class ClassDetailViewModel(
     /**
      * [LiveData] que representa el estado y el resultado de la búsqueda de alumnos
      * (que no están ya en la clase) para ser añadidos.
-     * En caso de [ClassDetailResult.Success], `data` contiene la lista de [User] encontrados.
+     * En caso de [ClassDetailResult.Success], `Data` contiene la lista de [User] encontrados.
      */
     val searchStudentsState: LiveData<ClassDetailResult<List<User>>> get() = _searchStudentsState
 

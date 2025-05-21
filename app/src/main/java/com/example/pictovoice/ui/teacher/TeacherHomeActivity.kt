@@ -14,7 +14,7 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.pictovoice.Data.repository.AuthRepository
 import com.example.pictovoice.R // Para acceder a R.string.*, R.layout.*, etc.
-import com.example.pictovoice.data.model.Classroom
+import com.example.pictovoice.Data.model.Classroom
 import com.example.pictovoice.adapters.TeacherClassesAdapter
 import com.example.pictovoice.databinding.ActivityTeacherHomeBinding
 import com.example.pictovoice.ui.auth.MainActivity

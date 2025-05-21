@@ -8,15 +8,15 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.pictovoice.Data.datasource.PictogramDataSource
+import com.example.pictovoice.Data.model.Category
+import com.example.pictovoice.Data.model.Pictogram
 import com.example.pictovoice.Data.repository.FirestoreRepository
-import com.example.pictovoice.data.datasource.PictogramDataSource // Fuente centralizada de pictogramas y categorías locales
-import com.example.pictovoice.data.model.Category
-import com.example.pictovoice.data.model.Pictogram
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 private const val MAX_PHRASE_PICTOGRAMS = 25
-private const val TAG = "StudentHomeVM" // Tag para Logs
+private const val TAG = "StudentHomeVM"
 
 /**
  * ViewModel para la [com.example.pictovoice.ui.home.HomeActivity].
@@ -79,10 +79,8 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
         Log.d(TAG, "ViewModel inicializado.")
         allDefinedDynamicCategories = PictogramDataSource.getAllDynamicCategories()
         allLocalPictograms = PictogramDataSource.getAllPictograms()
-        // La UI inicial se refrescará cuando se llame a loadAndListenToUserData,
-        // que a su vez llamará a refreshUiBasedOnCurrentUser con datos (o nulos).
-        // Si se necesita un estado visual inmediato antes de que el usuario se cargue:
-        refreshUiBasedOnCurrentUser()
+        Log.d(TAG, "Pictogramas locales cargados: ${allLocalPictograms.size}, Categorías dinámicas definidas: ${allDefinedDynamicCategories.size}")
+        refreshUiBasedOnCurrentUser() // Llamada inicial con _currentUser.value (que será null)
     }
 
     /**
@@ -96,17 +94,18 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
         if (userId.isBlank()) {
             _errorMessage.value = "ID de usuario no válido para la escucha de datos."
             Log.w(TAG, "loadAndListenToUserData: userId está vacío.")
+            _isLoading.value = false // Asegurar que isLoading se resetea
             return
         }
         _isLoading.value = true
-        userDocumentListener?.remove() // Eliminar listener anterior si existiera
+        userDocumentListener?.remove()
 
         Log.d(TAG, "Estableciendo listener para el usuario: $userId")
         userDocumentListener = firestoreRepository.addUserDocumentListener(
             userId,
             onUpdate = { updatedUser ->
                 _isLoading.value = false
-                val previousLevelSnapshot = _currentUser.value?.currentLevel
+                val oldUser = _currentUser.value
                 _currentUser.value = updatedUser
 
                 if (updatedUser != null) {
@@ -119,10 +118,24 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
                         _levelUpEvent.value = updatedUser.currentLevel
                         previousUserLevelForNotification = updatedUser.currentLevel
                     }
+
+                    // Optimización: Solo refrescar la UI completa si hay cambios relevantes que afecten la visualización de pictogramas/categorías
+                    if (oldUser == null || // Primera carga
+                        oldUser.currentLevel != updatedUser.currentLevel ||
+                        oldUser.maxContentLevelApproved != updatedUser.maxContentLevelApproved ||
+                        oldUser.unlockedCategories != updatedUser.unlockedCategories ||
+                        _availableCategories.value.isNullOrEmpty() ) {
+                        Log.d(TAG, "Cambio significativo en usuario (o primera carga) detectado vía listener, refrescando UI completa.")
+                        refreshUiBasedOnCurrentUser()
+                    } else {
+                        // Aunque solo cambie la EXP, no es necesario un refresh completo de listas de HomeActivity
+                        // La EXP se verá actualizada en UserProfileActivity cuando se cargue.
+                        Log.d(TAG, "Actualización de usuario (listener) sin cambios en nivel/permisos/categorías para Home. No se refresca UI completa.")
+                    }
                 } else {
                     Log.w(TAG, "Listener de usuario: datos de usuario nulos (posiblemente eliminado).")
+                    refreshUiBasedOnCurrentUser()
                 }
-                refreshUiBasedOnCurrentUser()
             },
             onError = { exception ->
                 _isLoading.value = false
@@ -144,7 +157,7 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
         val contentAccessLevel = if (user != null && user.maxContentLevelApproved > 0) user.maxContentLevelApproved else 1
         val userUnlockedCategoryIds = user?.unlockedCategories ?: listOf(PictogramDataSource.CATEGORY_ID_COMIDA)
 
-        Log.d(TAG, "refreshUiBasedOnCurrentUser: NivelAccesoContenido=$contentAccessLevel, CarpetasDesbloqueadas=$userUnlockedCategoryIds")
+        Log.d(TAG, "refreshUiBasedOnCurrentUser: NivelAccesoContenido=$contentAccessLevel, CarpetasDesbloqueadas=${userUnlockedCategoryIds.joinToString()}")
 
         _availableCategories.value = allDefinedDynamicCategories.filter { category ->
             userUnlockedCategoryIds.contains(category.categoryId)
@@ -162,8 +175,8 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
         if (!availableDynamicCats.isNullOrEmpty()) {
             val currentName = _currentDynamicCategoryName.value
             categoryToLoad = if (!currentName.isNullOrBlank()) availableDynamicCats.find { it.name == currentName } else null
-            if (categoryToLoad == null) categoryToLoad = availableDynamicCats.find { it.categoryId == PictogramDataSource.CATEGORY_ID_COMIDA }
-            if (categoryToLoad == null) categoryToLoad = availableDynamicCats.first()
+            if (categoryToLoad == null) { categoryToLoad = availableDynamicCats.find { it.categoryId == PictogramDataSource.CATEGORY_ID_COMIDA } }
+            if (categoryToLoad == null) { categoryToLoad = availableDynamicCats.first() }
         }
 
         if (categoryToLoad != null) {
@@ -186,17 +199,17 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
         category: Category,
         contentAccessLevelForFiltering: Int = _currentUser.value?.maxContentLevelApproved ?: 1
     ) {
-        // isLoading se maneja globalmente en loadAndListenToUserData y refreshUiBasedOnCurrentUser
-        // para evitar parpadeos al cambiar solo la categoría.
-        // Si esta función fuera muy pesada, se podría añadir un isLoading específico.
+        val user = _currentUser.value
+        val actualContentAccessLevel = if (user != null && user.maxContentLevelApproved > 0) user.maxContentLevelApproved else 1
+
         _currentDynamicCategoryName.value = category.name
-        Log.d(TAG, "Cargando pictogramas dinámicos para '${category.name}', NivelAccesoContenido: $contentAccessLevelForFiltering")
+        Log.d(TAG, "Cargando pictogramas dinámicos para '${category.name}', NivelAccesoContenido REAL: $actualContentAccessLevel (param fue: $contentAccessLevelForFiltering)")
 
         val filteredPictos = allLocalPictograms.filter { pict ->
-            pict.category == category.categoryId && pict.levelRequired <= contentAccessLevelForFiltering
+            pict.category == category.categoryId && pict.levelRequired <= actualContentAccessLevel
         }
         _dynamicPictograms.value = filteredPictos
-        Log.d(TAG, "Encontrados ${filteredPictos.size} pictogramas para '${category.name}'")
+        Log.d(TAG, "Encontrados ${filteredPictos.size} pictogramas para '${category.name}' con nivel acceso $actualContentAccessLevel")
     }
 
     /**
@@ -218,10 +231,8 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
                     Log.d(TAG, "Añadiendo ${pictogram.baseExp} EXP al usuario $userId por pictograma '${pictogram.name}'")
                     val expResult = firestoreRepository.addExperienceToStudent(userId, pictogram.baseExp)
                     if (expResult.isSuccess) {
-                        Log.d(TAG, "EXP añadida en Firestore. El listener actualizará el estado del usuario.")
-                        // No es necesario actualizar _currentUser aquí directamente, ya que el listener de Firestore
-                        // en loadAndListenToUserData se encargará de recibir el usuario actualizado y
-                        // disparar refreshUiBasedOnCurrentUser y la lógica de _levelUpEvent.
+                        Log.d(TAG, "EXP añadida en Firestore. El listener de Firestore en loadAndListenToUserData se encargará de actualizar _currentUser y la UI.")
+                        // No actualizamos _currentUser aquí; el listener lo hará para evitar doble refresco o datos inconsistentes.
                     } else {
                         _errorMessage.value = expResult.exceptionOrNull()?.message ?: "Error al añadir experiencia."
                         Log.e(TAG, "Fallo al añadir experiencia: ${expResult.exceptionOrNull()?.message}")
@@ -260,36 +271,31 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
         updatePlayButtonVisibility()
     }
 
-    /**
-     * Actualiza la visibilidad del botón de reproducir frase basado en si la frase tiene pictogramas.
-     */
     private fun updatePlayButtonVisibility() {
         _playButtonVisibility.value = _phrasePictograms.value?.isNotEmpty() == true
     }
 
-    /**
-     * Inicia la reproducción de la secuencia de audios de la frase actual.
-     * También registra las estadísticas de frases creadas y palabras usadas.
-     */
     fun onPlayPhraseClicked() {
         val phrase = _phrasePictograms.value
         val student = _currentUser.value
         val userId = student?.userId
+        Log.d(TAG, "onPlayPhraseClicked: Usuario $userId, Frase: ${phrase?.joinToString { it.name }}") // Log inicial
 
         if (phrase.isNullOrEmpty()) {
             _errorMessage.value = "No hay pictogramas en la frase para reproducir."
             return
         }
 
-        // Registrar estadísticas
         if (userId != null && userId.isNotBlank()) {
             viewModelScope.launch {
-                firestoreRepository.incrementPhrasesCreatedCount(userId)
+                val phrasesResult = firestoreRepository.incrementPhrasesCreatedCount(userId)
+                Log.d(TAG, "Resultado incrementPhrasesCreatedCount: ${phrasesResult.isSuccess}")
+
                 val wordsInPhraseCount = phrase.size
                 if (wordsInPhraseCount > 0) {
-                    firestoreRepository.incrementWordsUsedCount(userId, wordsInPhraseCount)
+                    val wordsResult = firestoreRepository.incrementWordsUsedCount(userId, wordsInPhraseCount)
+                    Log.d(TAG, "Resultado incrementWordsUsedCount ($wordsInPhraseCount palabras): ${wordsResult.isSuccess}")
                 }
-                Log.d(TAG, "Estadísticas de frase y palabras usadas actualizadas para usuario $userId.")
             }
         }
 
@@ -310,8 +316,7 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
     private fun playNextAudioFromQueue() {
         if (audioQueue.isEmpty()) {
             Log.d(TAG, "Cola de audio finalizada.")
-            releaseMediaPlayer()
-            return
+            releaseMediaPlayer(); return
         }
         val audioResId = audioQueue.removeAt(0)
         Log.d(TAG, "Reproduciendo siguiente audio de la cola: ResId $audioResId. Restantes: ${audioQueue.size}")
@@ -321,34 +326,25 @@ class StudentHomeViewModel(application: Application) : AndroidViewModel(applicat
                     Log.d(TAG, "Audio ResId $audioResId completado.")
                     playNextAudioFromQueue()
                 }
-                setOnErrorListener { mp, what, extra ->
+                setOnErrorListener { _, what, extra ->
                     Log.e(TAG, "Error durante reproducción de audio ResId $audioResId: what=$what, extra=$extra")
-                    releaseMediaPlayer()
-                    playNextAudioFromQueue() // Intenta el siguiente si este falla
-                    true
+                    releaseMediaPlayer(); playNextAudioFromQueue(); true
                 }
                 start()
             }
-            if (mediaPlayer == null) { // Falló MediaPlayer.create
+            if (mediaPlayer == null) {
                 Log.e(TAG, "MediaPlayer.create falló para ResId $audioResId. Saltando.")
                 playNextAudioFromQueue()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Excepción al crear o iniciar MediaPlayer para ResId $audioResId", e)
-            releaseMediaPlayer()
-            playNextAudioFromQueue() // Intenta el siguiente
+            releaseMediaPlayer(); playNextAudioFromQueue()
         }
     }
 
     private fun releaseMediaPlayer() {
-        mediaPlayer?.run {
-            if (isPlaying) {
-                stop()
-            }
-            release()
-        }
+        mediaPlayer?.run { if (isPlaying) stop(); release() }
         mediaPlayer = null
-        Log.d(TAG, "MediaPlayer liberado.")
     }
 
     override fun onCleared() {

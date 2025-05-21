@@ -109,8 +109,7 @@ class HomeActivity : AppCompatActivity() {
         // Adaptador para las carpetas de categorías dinámicas
         categoryAdapter = CategoryAdapter { category ->
             Log.d(TAG, "Carpeta de categoría seleccionada: ${category.name}")
-            // El ViewModel internamente usará el maxContentLevelApproved del usuario actual
-            viewModel.loadDynamicPictogramsByLocalCategory(category)
+            viewModel.loadDynamicPictogramsByLocalCategory(category) // <--- Aquí está la llamada
         }
         binding.categoryNavigationContainer.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)

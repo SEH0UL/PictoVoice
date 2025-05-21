@@ -22,7 +22,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:src="@drawable/ic_default_profile"
+            android:src="@drawable/ic_student"
             android:contentDescription="@string/cd_student_profile_icon_in_list" />
 
         <TextView

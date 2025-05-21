@@ -11,7 +11,7 @@
         android:id="@+id/ivTeacherProfileImage"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:src="@drawable/ic_default_profile"
+        android:src="@drawable/ic_teacher"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

@@ -52,7 +52,9 @@
             android:layout_width="48dp" android:layout_height="48dp" android:contentDescription="@string/class_detail_button_add_student_tooltip" android:tooltipText="@string/class_detail_button_add_student_tooltip" app:icon="@drawable/ic_person_add"
             app:iconGravity="textStart" app:layout_constraintBottom_toBottomOf="@id/searchViewStudents"
             app:layout_constraintDimensionRatio="1:1" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/searchViewStudents" />
+            app:layout_constraintTop_toTopOf="@id/searchViewStudents"
+            android:backgroundTint="@color/teal_700"
+            android:textColor="@color/white"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvStudentsInClass"

@@ -17,7 +17,7 @@
             android:id="@+id/toolbarUserProfile"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
+            android:background="@color/primary_color"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -54,7 +54,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tvProfileTitle"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-                app:strokeColor="?attr/colorPrimaryDark"
+                app:strokeColor="@color/purple_700"
                 app:strokeWidth="2dp" />
 
             <TextView
@@ -210,6 +210,8 @@
                 app:icon="@drawable/ic_unlock"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
+                android:backgroundTint="@color/color_btn_login"
+                android:textColor="@color/white"
                 app:layout_constraintTop_toBottomOf="@id/btnSolicitarPalabras"
                 tools:text="@string/profile_button_approve_request_level"
                 tools:visibility="visible" />

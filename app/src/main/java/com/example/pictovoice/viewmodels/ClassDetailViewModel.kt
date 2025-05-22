@@ -105,15 +105,15 @@ class ClassDetailViewModel(
                 val classroom = classResult.getOrNull()
                 _classroomDetails.value = classroom
                 if (classroom != null) {
-                    Log.d(TAG, "Detalles de la clase '${classroom.className}' cargados.")
+                    Log.d(TAG, "Detalles de la clase '${classroom.className}' cargados. StudentIDs en Firestore: ${classroom.studentIds}") // <--- LOG CLAVE 1
                     if (classroom.studentIds.isNotEmpty()) {
                         val studentsResult = firestoreRepository.getUsersByIds(classroom.studentIds)
                         if (studentsResult.isSuccess) {
                             val students = studentsResult.getOrNull() ?: emptyList()
+                            Log.d(TAG, "Alumnos obtenidos de getUsersByIds: ${students.map { it.fullName + "(" + it.userId + ")" }}") // <--- LOG CLAVE 2
                             _studentsInClass.value = students
-                            _filteredStudentsInClass.value = students // Inicializar lista filtrada
-                            _uiState.value = ClassDetailResult.Success(students) // Podría ser Success(Unit) si el foco es solo el estado
-                            Log.d(TAG, "${students.size} alumnos cargados para la clase.")
+                            _filteredStudentsInClass.value = students
+                            _uiState.value = ClassDetailResult.Success(students)
                         } else {
                             handleStudentLoadError(studentsResult.exceptionOrNull())
                         }

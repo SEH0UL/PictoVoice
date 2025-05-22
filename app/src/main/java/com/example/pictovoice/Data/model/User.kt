@@ -81,41 +81,49 @@ data class User(
          * @param snapshot El DocumentSnapshot a convertir.
          * @return Un objeto User, o null si la conversión falla o el snapshot no contiene datos.
          */
-        fun fromSnapshot(snapshot: DocumentSnapshot): User? {
-            return try {
-                val data = snapshot.data
-                if (data == null) {
-                    Log.w("User.fromSnapshot", "El snapshot con ID ${snapshot.id} no contiene datos.")
-                    return null
-                }
+            fun fromSnapshot(snapshot: DocumentSnapshot): User? {
+                val docId = snapshot.id
+                Log.d("User.fromSnapshot", "Intentando convertir snapshot para ID: $docId")
+                return try {
+                    val data = snapshot.data
+                    if (data == null) {
+                        Log.w("User.fromSnapshot", "El snapshot con ID $docId no contiene datos.")
+                        return null
+                    }
 
-                val fullName = data["fullName"] as? String ?: ""
-                User(
-                    userId = snapshot.id,
-                    username = data["username"] as? String ?: "",
-                    fullName = fullName,
-                    // Si fullNameLowercase no existe en documentos antiguos, lo generamos a partir de fullName.
-                    // Es importante que los nuevos usuarios lo tengan poblado correctamente al registrarse.
-                    fullNameLowercase = data["fullNameLowercase"] as? String ?: fullName.trim().replace("\\s+".toRegex(), " ").toLowerCase(Locale.ROOT),
-                    email = data["email"] as? String ?: "",
-                    role = data["role"] as? String ?: "student",
-                    createdAt = data["createdAt"] as? Timestamp ?: Timestamp.now(),
-                    lastLogin = data["lastLogin"] as? Timestamp ?: Timestamp.now(),
-                    profileImageUrl = data["profileImageUrl"] as? String ?: "",
-                    currentLevel = (data["currentLevel"] as? Long)?.toInt() ?: 1,
-                    currentExp = (data["currentExp"] as? Long)?.toInt() ?: 0,
-                    totalExp = (data["totalExp"] as? Long)?.toInt() ?: 0,
-                    unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf(INITIAL_DEFAULT_CATEGORY_ID_FOR_USER),
-                    hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false,
-                    levelWordsRequestedFor = (data["levelWordsRequestedFor"] as? Long)?.toInt() ?: 0,
-                    maxContentLevelApproved = (data["maxContentLevelApproved"] as? Long)?.toInt() ?: 1,
-                    wordsUsedCount = (data["wordsUsedCount"] as? Long)?.toInt() ?: 0,
-                    phrasesCreatedCount = (data["phrasesCreatedCount"] as? Long)?.toInt() ?: 0
-                )
-            } catch (e: Exception) {
-                Log.e("User.fromSnapshot", "Error al convertir snapshot a User para ID ${snapshot.id}: ${e.message}", e)
-                null
+                    // Loguear cada campo antes de castearlo
+                    // Log.d("User.fromSnapshot", "ID: $docId, Data: $data")
+
+                    val fullName = data["fullName"] as? String ?: ""
+                    // Log.d("User.fromSnapshot", "ID: $docId, fullName: $fullName")
+
+                    User(
+                        userId = docId,
+                        username = data["username"] as? String ?: "",
+                        fullName = fullName,
+                        fullNameLowercase = data["fullNameLowercase"] as? String ?: fullName.trim().replace("\\s+".toRegex(), " ").toLowerCase(Locale.ROOT),
+                        email = data["email"] as? String ?: "",
+                        role = data["role"] as? String ?: "student",
+                        createdAt = data["createdAt"] as? Timestamp ?: Timestamp.now(),
+                        lastLogin = data["lastLogin"] as? Timestamp ?: Timestamp.now(),
+                        profileImageUrl = data["profileImageUrl"] as? String ?: "",
+                        currentLevel = (data["currentLevel"] as? Long)?.toInt() ?: 1,
+                        currentExp = (data["currentExp"] as? Long)?.toInt() ?: 0,
+                        totalExp = (data["totalExp"] as? Long)?.toInt() ?: 0,
+                        unlockedCategories = data["unlockedCategories"] as? List<String> ?: listOf("local_comida"), // Usa tu constante
+                        hasPendingWordRequest = data["hasPendingWordRequest"] as? Boolean ?: false,
+                        levelWordsRequestedFor = (data["levelWordsRequestedFor"] as? Long)?.toInt() ?: 0,
+                        maxContentLevelApproved = (data["maxContentLevelApproved"] as? Long)?.toInt() ?: 1,
+                        wordsUsedCount = (data["wordsUsedCount"] as? Long)?.toInt() ?: 0,
+                        phrasesCreatedCount = (data["phrasesCreatedCount"] as? Long)?.toInt() ?: 0
+                    ).also {
+                        Log.d("User.fromSnapshot", "Usuario convertido exitosamente para ID: $docId, Nombre: ${it.fullName}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("User.fromSnapshot", "Error EXCEPCIÓN al convertir snapshot a User para ID $docId: ${e.message}", e)
+                    null
+                }
             }
-        }
+
     }
 }

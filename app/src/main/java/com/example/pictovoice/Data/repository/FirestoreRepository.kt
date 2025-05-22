@@ -4,6 +4,7 @@ import User
 import android.util.Log
 import com.example.pictovoice.Data.datasource.PictogramDataSource // Importar para las constantes de ID
 import com.example.pictovoice.Data.model.Classroom
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -35,8 +36,8 @@ class FirestoreRepository {
         7 to listOf(PictogramDataSource.CATEGORY_ID_VERBOS_2),
         8 to listOf(PictogramDataSource.CATEGORY_ID_CHARLA_RAPIDA),
         9 to listOf(PictogramDataSource.CATEGORY_ID_FRASES_HECHAS),
-        10 to listOf(PictogramDataSource.CATEGORY_ID_OBJETOS), // Si se mantiene esta categoría dinámica
-        11 to listOf(PictogramDataSource.CATEGORY_ID_ACCIONES)  // Si se mantiene esta categoría dinámica
+        10 to listOf(PictogramDataSource.CATEGORY_ID_OBJETOS),
+        11 to listOf(PictogramDataSource.CATEGORY_ID_ACCIONES)
     )
 
     /**
@@ -237,7 +238,7 @@ class FirestoreRepository {
                 Log.w("FirestoreRepo", "La lista de userIds (${userIds.size}) para getUsersByIds excede el límite de 30. Considerar paginación o múltiples consultas.")
                 // Implementar lógica de chunking (dividir en lotes de 30) si es un caso común y necesario.
             }
-            val querySnapshot = usersCollection.whereIn("userId", userIds).get().await()
+            val querySnapshot = usersCollection.whereIn(FieldPath.documentId(), userIds).get().await()
             val users = querySnapshot.documents.mapNotNull { User.fromSnapshot(it) }
             kotlin.Result.success(users)
         } catch (e: Exception) {

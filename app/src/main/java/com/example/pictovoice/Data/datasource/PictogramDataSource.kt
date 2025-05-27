@@ -28,22 +28,19 @@ object PictogramDataSource {
     const val CATEGORY_ID_FRASES_HECHAS = "local_frases_hechas"
     const val CATEGORY_ID_NUMEROS = "local_numeros"
     const val CATEGORY_ID_OBJETOS = "local_objetos"
-    const val CATEGORY_ID_ACCIONES = "local_acciones"
 
-    // Lista de todas las categorías dinámicas definidas que pueden aparecer como carpetas
+    // Lista de todas las categorías dinámicas definidas
     fun getAllDynamicCategories(): List<Category> {
         return listOf(
-            Category(categoryId = CATEGORY_ID_COMIDA, name = "Comida", displayOrder = 0 /*, iconResourceId = R.drawable.ic_folder_food*/),
-            Category(categoryId = CATEGORY_ID_ANIMALES, name = "Animales", displayOrder = 1 /*, iconResourceId = R.drawable.ic_folder_animals*/),
-            Category(categoryId = CATEGORY_ID_SENTIMIENTOS, name = "Sentimientos", displayOrder = 2 /*, iconResourceId = R.drawable.ic_folder_sentimientos */),
-            Category(categoryId = CATEGORY_ID_NUMEROS, name = "Números", displayOrder = 3 /*, iconResourceId = R.drawable.ic_folder_numeros */),
-            Category(categoryId = CATEGORY_ID_AFICIONES, name = "Aficiones", displayOrder = 4 /*, iconResourceId = R.drawable.ic_folder_aficiones */),
-            Category(categoryId = CATEGORY_ID_LUGARES, name = "Lugares", displayOrder = 5 /*, iconResourceId = R.drawable.ic_folder_lugares */),
-            Category(categoryId = CATEGORY_ID_VERBOS_2, name = "Verbos II", displayOrder = 6 /*, iconResourceId = R.drawable.ic_folder_verbos2 */),
-            Category(categoryId = CATEGORY_ID_CHARLA_RAPIDA, name = "Charla Rápida", displayOrder = 7 /*, iconResourceId = R.drawable.ic_folder_charla_rapida */),
-            Category(categoryId = CATEGORY_ID_FRASES_HECHAS, name = "Frases Hechas", displayOrder = 8 /*, iconResourceId = R.drawable.ic_folder_frases_hechas */),
-            Category(categoryId = CATEGORY_ID_OBJETOS, name = "Objetos", displayOrder = 9 /*, iconResourceId = R.drawable.ic_folder_objetos*/), // Si aún la quieres
-            Category(categoryId = CATEGORY_ID_ACCIONES, name = "Acciones", displayOrder = 10 /*, iconResourceId = R.drawable.ic_folder_acciones*/) // Si aún la quieres
+            Category(categoryId = CATEGORY_ID_COMIDA, name = "Comida", displayOrder = 0 ),
+            Category(categoryId = CATEGORY_ID_ANIMALES, name = "Animales", displayOrder = 1 ),
+            Category(categoryId = CATEGORY_ID_SENTIMIENTOS, name = "Sentimientos", displayOrder = 2 ),
+            Category(categoryId = CATEGORY_ID_NUMEROS, name = "Números", displayOrder = 3),
+            Category(categoryId = CATEGORY_ID_AFICIONES, name = "Aficiones", displayOrder = 4 ),
+            Category(categoryId = CATEGORY_ID_LUGARES, name = "Lugares", displayOrder = 5 ),
+            Category(categoryId = CATEGORY_ID_VERBOS_2, name = "Verbos II", displayOrder = 6 ),
+            Category(categoryId = CATEGORY_ID_CHARLA_RAPIDA, name = "Charla Rápida", displayOrder = 7 ),
+            Category(categoryId = CATEGORY_ID_OBJETOS, name = "Objetos", displayOrder = 8 ),
         )
     }
 
@@ -51,7 +48,7 @@ object PictogramDataSource {
     fun getAllPictograms(): List<Pictogram> {
         val pictos = mutableListOf<Pictogram>()
 
-// --- PRONOMBRES (Categoría Fija) ---
+    // --- PRONOMBRES (Categoría Fija) ---
         pictos.add(Pictogram(pictogramId = "local_pro_001", name = "Yo", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_yo, audioResourceId = R.raw.audio_yo, levelRequired = 1, baseExp = 10))
         pictos.add(Pictogram(pictogramId = "local_pro_002", name = "Tú", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_tu, audioResourceId = R.raw.audio_tu, levelRequired = 1, baseExp = 10))
         pictos.add(Pictogram(pictogramId = "local_pro_003", name = "Él", category = PRONOUNS_CATEGORY_ID, imageResourceId = R.drawable.picto_el, audioResourceId = R.raw.audio_el, levelRequired = 1, baseExp = 10))
@@ -74,7 +71,7 @@ object PictogramDataSource {
 
         // --- COMIDA ---
         pictos.add(Pictogram(pictogramId = "local_com_029_manzana", name = "Manzana", category = CATEGORY_ID_COMIDA, imageResourceId = R.drawable.picto_manzana, audioResourceId = R.raw.audio_manzana, levelRequired = 1, baseExp = 20))
-        pictos.add(Pictogram(pictogramId = "local_com_001", name = "Desayuno", category = CATEGORY_ID_COMIDA, imageResourceId = R.drawable.picto_desayuno, audioResourceId = R.raw.audio_desayuno, levelRequired = 1, baseExp = 20)) // Asumiendo baseExp
+        pictos.add(Pictogram(pictogramId = "local_com_001", name = "Desayuno", category = CATEGORY_ID_COMIDA, imageResourceId = R.drawable.picto_desayuno, audioResourceId = R.raw.audio_desayuno, levelRequired = 1, baseExp = 20))
         pictos.add(Pictogram(pictogramId = "local_com_002", name = "Almuerzo", category = CATEGORY_ID_COMIDA, imageResourceId = R.drawable.picto_almuerzo, audioResourceId = R.raw.audio_almuerzo, levelRequired = 1, baseExp = 20))
         pictos.add(Pictogram(pictogramId = "local_com_003", name = "Comida", category = CATEGORY_ID_COMIDA, imageResourceId = R.drawable.picto_comida, audioResourceId = R.raw.audio_comida, levelRequired = 1, baseExp = 20))
         pictos.add(Pictogram(pictogramId = "local_com_004", name = "Merienda", category = CATEGORY_ID_COMIDA, imageResourceId = R.drawable.picto_merienda, audioResourceId = R.raw.audio_merienda, levelRequired = 1, baseExp = 20))
@@ -106,7 +103,7 @@ object PictogramDataSource {
         pictos.add(Pictogram(pictogramId = "local_com_030_galleta", name = "Galleta", category = CATEGORY_ID_COMIDA, imageResourceId = R.drawable.picto_galleta, audioResourceId = R.raw.audio_galleta, levelRequired = 1, baseExp = 10))
         pictos.add(Pictogram(pictogramId = "local_com_031_leche", name = "Leche", category = CATEGORY_ID_COMIDA, imageResourceId = R.drawable.picto_leche, audioResourceId = R.raw.audio_leche, levelRequired = 1, baseExp = 15))
 
-        // Ejemplo para otra categoría
+        // -- ANIMALES --
         pictos.add(Pictogram(pictogramId = "local_ani_001", name = "Perro", category = CATEGORY_ID_ANIMALES, imageResourceId = R.drawable.picto_perro, audioResourceId = R.raw.audio_perro, levelRequired = 2, baseExp = 25))
         pictos.add(Pictogram(pictogramId = "local_ani_002", name = "Gato", category = CATEGORY_ID_ANIMALES, imageResourceId = R.drawable.picto_gato, audioResourceId = R.raw.audio_gato, levelRequired = 2, baseExp = 25))
         pictos.add(Pictogram(pictogramId = "local_ani_003", name = "Vaca", category = CATEGORY_ID_ANIMALES, imageResourceId = R.drawable.picto_vaca, audioResourceId = R.raw.audio_vaca, levelRequired = 2, baseExp = 25))
@@ -123,43 +120,110 @@ object PictogramDataSource {
         pictos.add(Pictogram(pictogramId = "local_ani_014", name = "Rinoceronte", category = CATEGORY_ID_ANIMALES, imageResourceId = R.drawable.picto_rinoceronte, audioResourceId = R.raw.audio_rinoceronte, levelRequired = 2, baseExp = 25))
         pictos.add(Pictogram(pictogramId = "local_ani_015", name = "Araña", category = CATEGORY_ID_ANIMALES, imageResourceId = R.drawable.picto_aranya, audioResourceId = R.raw.audio_aranya, levelRequired = 2, baseExp = 25))
 
+        // -- SENTIMIENTOS --
+        pictos.add(Pictogram(pictogramId = "local_sen_001", name = "Aburrimiento", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_aburrimiento, audioResourceId = R.raw.audio_aburrimiento, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_002", name = "Amado", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_amada, audioResourceId = R.raw.audio_amada, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_003", name = "Calor", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_calor, audioResourceId = R.raw.audio_calor, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_004", name = "Dolor", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_dolor, audioResourceId = R.raw.audio_dolor, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_005", name = "Enfado", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_enfado, audioResourceId = R.raw.audio_enfado, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_006", name = "Frío", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_frio, audioResourceId = R.raw.audio_frio, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_007", name = "Hambre", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_hambre, audioResourceId = R.raw.audio_hambre, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_008", name = "Miedo", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_miedo, audioResourceId = R.raw.audio_miedo, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_009", name = "Nervioso", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_nervioso, audioResourceId = R.raw.audio_nervioso, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_010", name = "Orgulloso", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_orgulloso, audioResourceId = R.raw.audio_orgulloso, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_011", name = "Picar", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_picar, audioResourceId = R.raw.audio_picar, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_012", name = "Risa", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_risa, audioResourceId = R.raw.audio_risa, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_013", name = "Sed", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_sed, audioResourceId = R.raw.audio_sed, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_014", name = "Sorpresa", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_sorpresa, audioResourceId = R.raw.audio_sorpresa, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_015", name = "Sueño", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_suenyo, audioResourceId = R.raw.audio_suenyo, levelRequired = 3, baseExp = 30))
+        pictos.add(Pictogram(pictogramId = "local_sen_016", name = "Vergüenza", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_verguenza, audioResourceId = R.raw.audio_verguenza, levelRequired = 3, baseExp = 30))
 
-        // **SENTIMIENTOS (CATEGORY_ID_SENTIMIENTOS = "local_sentimientos")**
-        // Define levelRequired según tu mapeo (ej. Nivel 3)
-        // EJEMPLO: pictos.add(Pictogram(pictogramId = "local_sen_feliz", name = "Feliz", category = CATEGORY_ID_SENTIMIENTOS, imageResourceId = R.drawable.picto_feliz, audioResourceId = R.raw.audio_feliz, levelRequired = 3, baseExp = 30))
-        // ¡¡¡DEBES AÑADIR TUS PICTOGRAMAS AQUÍ!!!
+        // -- NUMEROS --
+        pictos.add(Pictogram(pictogramId = "local_num_001", name = "Uno", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_1, audioResourceId = R.raw.audio_1, levelRequired = 4, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_num_002", name = "Dos", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_2, audioResourceId = R.raw.audio_2, levelRequired = 4, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_num_003", name = "Tres", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_3, audioResourceId = R.raw.audio_3, levelRequired = 4, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_num_004", name = "Cuatro", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_4, audioResourceId = R.raw.audio_4, levelRequired = 4, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_num_005", name = "Cinco", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_5, audioResourceId = R.raw.audio_5, levelRequired = 4, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_num_006", name = "Seis", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_6, audioResourceId = R.raw.audio_6, levelRequired = 4, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_num_007", name = "Siete", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_7, audioResourceId = R.raw.audio_7, levelRequired = 4, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_num_008", name = "Ocho", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_8, audioResourceId = R.raw.audio_8, levelRequired = 4, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_num_009", name = "Nueve", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_9, audioResourceId = R.raw.audio_9, levelRequired = 4, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_num_010", name = "Diez", category = CATEGORY_ID_NUMEROS, imageResourceId = R.drawable.picto_10, audioResourceId = R.raw.audio_10, levelRequired = 4, baseExp = 25))
 
-        // **NÚMEROS (CATEGORY_ID_NUMEROS = "local_numeros")**
-        // Define levelRequired (ej. Nivel 4)
-        // ¡¡¡DEBES AÑADIR TUS PICTOGRAMAS AQUÍ!!!
+        // -- OBJETOS --
+        pictos.add(Pictogram(pictogramId = "local_obj_001", name = "billete", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_billetes, audioResourceId = R.raw.audio_billetes, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_002", name = "Libro", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_libro, audioResourceId = R.raw.audio_libro, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_003", name = "caja", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_caja, audioResourceId = R.raw.audio_caja, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_004", name = "calendario", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_calendario, audioResourceId = R.raw.audio_calendario, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_005", name = "dibujo", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_dibujo, audioResourceId = R.raw.audio_dibujo, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_006", name = "Lápiz", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_lapiz, audioResourceId = R.raw.audio_lapiz, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_007", name = "fuego", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_fuego, audioResourceId = R.raw.audio_fuego, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_008", name = "Llave", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_llave, audioResourceId = R.raw.audio_llave, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_009", name = "Monedas", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_monedas, audioResourceId = R.raw.audio_monedas, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_010", name = "Monedero", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_monedero, audioResourceId = R.raw.audio_monedero, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_011", name = "Objeto", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_objeto, audioResourceId = R.raw.audio_objeto, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_012", name = "Papel", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_papel, audioResourceId = R.raw.audio_papel, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_013", name = "Pincel", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_pincel, audioResourceId = R.raw.audio_pincel, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_014", name = "Pinturas", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_pinturas, audioResourceId = R.raw.audio_pinturas, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_015", name = "Pizarra", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_pizarra, audioResourceId = R.raw.audio_pizarra, levelRequired = 5, baseExp = 20))
+        pictos.add(Pictogram(pictogramId = "local_obj_016", name = "Reloj", category = CATEGORY_ID_OBJETOS, imageResourceId = R.drawable.picto_reloj, audioResourceId = R.raw.audio_reloj, levelRequired = 5, baseExp = 20))
 
-        // **AFICIONES (CATEGORY_ID_AFICIONES = "local_aficiones")**
-        // Define levelRequired (ej. Nivel 5)
-        // ¡¡¡DEBES AÑADIR TUS PICTOGRAMAS AQUÍ!!!
+        // -- LUGARES --
+        pictos.add(Pictogram(pictogramId = "local_lug_001", name = "Balancín", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_balancin, audioResourceId = R.raw.audio_balancin, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_002", name = "Banco", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_banco, audioResourceId = R.raw.audio_banco, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_003", name = "Cama elástica", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_cama_elastica, audioResourceId = R.raw.audio_cama_elastica, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_004", name = "Columpio", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_columpio, audioResourceId = R.raw.audio_columpio, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_005", name = "Floristería", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_floristeria, audioResourceId = R.raw.audio_floristeria, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_006", name = "Fuente", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_fuente, audioResourceId = R.raw.audio_fuente, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_007", name = "Heladería", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_heladeria, audioResourceId = R.raw.audio_heladeria, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_008", name = "Librería", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_libreria, audioResourceId = R.raw.audio_libreria, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_009", name = "Papelera", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_papelera, audioResourceId = R.raw.audio_papelera, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_010", name = "Tobogán", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_tobogan, audioResourceId = R.raw.audio_tobogan, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_011", name = "Calle", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_calle, audioResourceId = R.raw.audio_calle, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_012", name = "Campo", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_campo, audioResourceId = R.raw.audio_campo, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_013", name = "Casa", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_casa, audioResourceId = R.raw.audio_casa, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_014", name = "Cine", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_cine, audioResourceId = R.raw.audio_cine, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_015", name = "Circo", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_circo, audioResourceId = R.raw.audio_circo, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_016", name = "Ciudad", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_ciudad, audioResourceId = R.raw.audio_ciudad, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_017", name = "Colegio", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_colegio, audioResourceId = R.raw.audio_colegio, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_018", name = "Farmacia", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_farmacia, audioResourceId = R.raw.audio_farmacia, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_019", name = "Hospital", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_hospital, audioResourceId = R.raw.audio_hospital, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_020", name = "Mercado", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_mercado, audioResourceId = R.raw.audio_mercado, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_021", name = "Parque", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_parque, audioResourceId = R.raw.audio_parque, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_022", name = "Piscina", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_piscina, audioResourceId = R.raw.audio_piscina, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_023", name = "Playa", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_playa, audioResourceId = R.raw.audio_playa, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_024", name = "Plaza", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_plaza, audioResourceId = R.raw.audio_plaza, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_025", name = "Pueblo", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_pueblo, audioResourceId = R.raw.audio_pueblo, levelRequired = 6, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_lug_026", name = "Teatro", category = CATEGORY_ID_LUGARES, imageResourceId = R.drawable.picto_teatro, audioResourceId = R.raw.audio_teatro, levelRequired = 6, baseExp = 25))
 
-        // **LUGARES (CATEGORY_ID_LUGARES = "local_lugares")**
-        // Define levelRequired (ej. Nivel 6)
-        // ¡¡¡DEBES AÑADIR TUS PICTOGRAMAS AQUÍ!!!
+        // -- VERBOS 2 --
+        pictos.add(Pictogram(pictogramId = "local_v2_001", name = "Acompañar", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_acompanar, audioResourceId = R.raw.audio_acompanar, levelRequired = 7, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_v2_002", name = "Afirmar", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_afirmar, audioResourceId = R.raw.audio_afirmar, levelRequired = 7, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_v2_003", name = "Empujar", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_empujar, audioResourceId = R.raw.audio_empujar, levelRequired = 7, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_v2_004", name = "Esperar", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_esperar, audioResourceId = R.raw.audio_esperar, levelRequired = 7, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_v2_005", name = "Levantar la mano", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_levantar_mano, audioResourceId = R.raw.audio_levantar_mano, levelRequired = 7, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_v2_006", name = "Llevar", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_llevar, audioResourceId = R.raw.audio_llevar, levelRequired = 7, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_v2_007", name = "Negar", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_negar, audioResourceId = R.raw.audio_negar, levelRequired = 7, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_v2_008", name = "Pasear", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_pasear, audioResourceId = R.raw.audio_pasear, levelRequired = 7, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_v2_009", name = "Tocar", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_tocar, audioResourceId = R.raw.audio_tocar, levelRequired = 7, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_v2_010", name = "Traer", category = CATEGORY_ID_VERBOS_2, imageResourceId = R.drawable.picto_traer, audioResourceId = R.raw.audio_traer, levelRequired = 7, baseExp = 25))
 
-        // **VERBOS II (CATEGORY_ID_VERBOS_2 = "local_verbos_2")**
-        // Define levelRequired (ej. Nivel 7)
-        // ¡¡¡DEBES AÑADIR TUS PICTOGRAMAS AQUÍ!!!
-
-        // **CHARLA RÁPIDA (CATEGORY_ID_CHARLA_RAPIDA = "local_charla_rapida")**
-        // Define levelRequired (ej. Nivel 8)
-        // ¡¡¡DEBES AÑADIR TUS PICTOGRAMAS AQUÍ!!!
-
-        // **FRASES HECHAS (CATEGORY_ID_FRASES_HECHAS = "local_frases_hechas")**
-        // Define levelRequired (ej. Nivel 9)
-        // ¡¡¡DEBES AÑADIR TUS PICTOGRAMAS AQUÍ!!!
-
-        // **OBJETOS (CATEGORY_ID_OBJETOS = "local_objetos")** - Si la usas
-        // Define levelRequired
-        // ¡¡¡DEBES AÑADIR TUS PICTOGRAMAS AQUÍ!!!
-
-        // **ACCIONES (CATEGORY_ID_ACCIONES = "local_acciones")** - Si la usas
-        // Define levelRequired
-        // ¡¡¡DEBES AÑADIR TUS PICTOGRAMAS AQUÍ!!!
+        // -- CHARLA RÁPIDA --
+        pictos.add(Pictogram(pictogramId = "local_cr_001", name = "Adiós", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_adios, audioResourceId = R.raw.audio_adios, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_002", name = "Buenas noches", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_buenas_noches, audioResourceId = R.raw.audio_buenas_noches, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_003", name = "Buenas tardes", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_buenas_tardes, audioResourceId = R.raw.audio_buenas_tardes, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_004", name = "Buenos días", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_buenos_dias, audioResourceId = R.raw.audio_buenos_dias, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_005", name = "Estoy bien", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_estoy_bien, audioResourceId = R.raw.audio_estoy_bien, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_006", name = "Gracias", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_gracias, audioResourceId = R.raw.audio_gracias, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_007", name = "Hola", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_hola, audioResourceId = R.raw.audio_hola, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_008", name = "Lo siento", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_lo_siento, audioResourceId = R.raw.audio_lo_siento, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_009", name = "Mal", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_mal, audioResourceId = R.raw.audio_mal, levelRequired = 8, baseExp = 25)) 
+        pictos.add(Pictogram(pictogramId = "local_cr_010", name = "Me gusta eso", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_me_gusta_eso, audioResourceId = R.raw.audio_me_gusta_eso, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_011", name = "Muy guay", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_muy_guay, audioResourceId = R.raw.audio_muy_guay, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_012", name = "No lo entiendo", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_no_lo_entiendo, audioResourceId = R.raw.audio_no_lo_entiendo, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_013", name = "No me gusta eso", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_no_me_gusta_eso, audioResourceId = R.raw.audio_no_me_gusta_eso, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_014", name = "Por favor", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_por_favor, audioResourceId = R.raw.audio_por_favor, levelRequired = 8, baseExp = 25))
+        pictos.add(Pictogram(pictogramId = "local_cr_015", name = "Yo no sé", category = CATEGORY_ID_CHARLA_RAPIDA, imageResourceId = R.drawable.picto_yo_no_se, audioResourceId = R.raw.audio_yo_no_se, levelRequired = 8, baseExp = 25))
 
         return pictos
     }

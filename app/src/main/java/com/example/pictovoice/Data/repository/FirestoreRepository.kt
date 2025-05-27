@@ -37,7 +37,6 @@ class FirestoreRepository {
         8 to listOf(PictogramDataSource.CATEGORY_ID_CHARLA_RAPIDA),
         9 to listOf(PictogramDataSource.CATEGORY_ID_FRASES_HECHAS),
         10 to listOf(PictogramDataSource.CATEGORY_ID_OBJETOS),
-        11 to listOf(PictogramDataSource.CATEGORY_ID_ACCIONES)
     )
 
     /**
